@@ -95,7 +95,6 @@
         </div>
     </div>
 
-    <!-- 頁面 1 -->
     <div id="page1" class="page active">
         <h2>學生資料及方案</h2>
         <div class="section">
@@ -131,7 +130,6 @@
         <button class="btn" onclick="goToStep2()">下一步：選擇日期</button>
     </div>
 
-    <!-- 頁面 2 -->
     <div id="page2" class="page">
         <div id="studentInfoBar" style="background:#F5EFE6; padding:10px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:10px;"></div>
         <div id="step2PartCNotice" class="part-c-notice" style="display:none;"></div>
@@ -143,7 +141,6 @@
         </div>
     </div>
 
-    <!-- 頁面 3 -->
     <div id="page3" class="page">
         <div class="section">
             <p>學生：<strong id="resName"></strong> | 級別：<strong id="resGrade"></strong></p>
@@ -161,7 +158,6 @@
         <button class="btn no-print" style="background:#BCAAA4;" onclick="location.reload()">重新開始</button>
     </div>
 
-    <!-- 管理中心 -->
     <div class="no-print" style="margin-top: 80px; text-align: center; opacity: 0.2;">
         <span id="adminToggle" onclick="toggleAdmin()" style="cursor:pointer;">⚙ 管理中心</span>
     </div>
@@ -205,6 +201,40 @@ const GRADE_ORDER = { "升小一":1, "升小二":2, "升小三":3, "升小四":4
 
 let isDragging = false, selA = new Set(), selB = new Set();
 
+// --- 這裡已經換上你的 Google 網址 ---
+function saveRecord() {
+    const scriptURL = 'https://script.google.com/macros/s/AKfycbytG9-GmPKQnHUazB0Lm6YyzE0plxtwrnz0BLUxL6xZ4FKE1qyon0AaMZ2qG3xuJ1oz/exec'; 
+    
+    const r = { 
+        name: document.getElementById('stuName').value, 
+        gender: document.getElementById('stuGender').value, 
+        gradeText: document.getElementById('stuGrade').selectedOptions[0].text, 
+        level: (document.getElementById('stuGrade').value === 'secondary') ? '中學' : '小學', 
+        total: document.getElementById('estTotal').innerText, 
+        countA: selA.size, 
+        countB: selB.size, 
+        detailsA: Array.from(selA), 
+        detailsB: Array.from(selB), 
+        hasPartC: document.getElementById('planC').checked, 
+        timestamp: new Date().toLocaleString() 
+    };
+
+    // 1. 同步保留本地紀錄
+    let records = JSON.parse(localStorage.getItem('summerRegistration')) || [];
+    records.push(r);
+    localStorage.setItem('summerRegistration', JSON.stringify(records));
+
+    // 2. 傳送到 Google Sheets
+    fetch(scriptURL, {
+        method: 'POST',
+        mode: 'no-cors',
+        cache: 'no-cache',
+        body: JSON.stringify(r)
+    })
+    .then(() => console.log('Synced to Sheets'))
+    .catch(error => console.error('Sync failed:', error));
+}
+
 function playAlertAndNotify(msg, type='success') {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -220,10 +250,9 @@ function playAlertAndNotify(msg, type='success') {
 
 function updateEstimates() {
     const g = document.getElementById('stuGrade').value;
-    const nA_select = document.getElementById('planA');
     const optMaxA = document.getElementById('optMaxA');
     if (g === 'secondary') { optMaxA.value = "19"; optMaxA.text = "19 堂"; } else { optMaxA.value = "18"; optMaxA.text = "18 堂"; }
-    const nA = Number(nA_select.value), nB = Number(document.getElementById('planB').value), isC = document.getElementById('planC').checked;
+    const nA = Number(document.getElementById('planA').value), nB = Number(document.getElementById('planB').value), isC = document.getElementById('planC').checked;
     const cHint = document.getElementById('partCDateHint');
     if (isC) { cHint.style.display = 'block'; cHint.innerText = `★ Part C 日期：${PART_C_DATES[g==='secondary'?'secondary':'primary']}`; } else { cHint.style.display = 'none'; }
     const p = PRICING[g==='secondary'?'secondary':'primary'];
@@ -236,17 +265,12 @@ function updateEstimates() {
 
 function goToStep2() {
     if (!/^[\u4e00-\u9fa5]+$/.test(document.getElementById('stuName').value)) { playAlertAndNotify("請輸入中文姓名", "error"); return; }
-    
-    // 修復：進入選課頁面時強制清空歷史選擇，防止計數器出錯
-    selA.clear(); 
-    selB.clear();
-    
+    selA.clear(); selB.clear();
     document.getElementById('page1').classList.remove('active');
     document.getElementById('page2').classList.add('active');
     const gVal = document.getElementById('stuGrade').value, isC = document.getElementById('planC').checked, nA = Number(document.getElementById('planA').value), nB = Number(document.getElementById('planB').value);
     document.getElementById('studentInfoBar').innerText = `學生：${document.getElementById('stuName').value} | 年級：${document.getElementById('stuGrade').selectedOptions[0].text}`;
-    const s2Notice = document.getElementById('step2PartCNotice');
-    if(isC) { s2Notice.style.display = 'block'; s2Notice.innerText = `★ Part C 日期：${PART_C_DATES[gVal==='secondary'?'secondary':'primary']} ★`; } else { s2Notice.style.display = 'none'; }
+    if(isC) { document.getElementById('step2PartCNotice').style.display = 'block'; document.getElementById('step2PartCNotice').innerText = `★ Part C 日期：${PART_C_DATES[gVal==='secondary'?'secondary':'primary']} ★`; } else { document.getElementById('step2PartCNotice').style.display = 'none'; }
     document.getElementById('secA').style.display = nA > 0 ? 'block' : 'none';
     document.getElementById('secB').style.display = nB > 0 ? 'block' : 'none';
     document.getElementById('maxA').innerText = nA; document.getElementById('maxB').innerText = nB;
@@ -281,15 +305,14 @@ function toggleDay(el, item, set, limit, curId, dataList, isHover) {
 }
 
 function submitAndGoToStep3() {
-    if (selA.size < Number(document.getElementById('planA').value) || selB.size < Number(document.getElementById('planB').value)) { playAlertAndNotify("請選滿堂數才能確認", "error"); return; }
+    if (selA.size < Number(document.getElementById('planA').value) || selB.size < Number(document.getElementById('planB').value)) { playAlertAndNotify("請選滿堂數", "error"); return; }
     saveRecord();
     const gVal = document.getElementById('stuGrade').value, isC = document.getElementById('planC').checked;
     document.getElementById('resName').innerText = document.getElementById('stuName').value;
     document.getElementById('resGrade').innerText = document.getElementById('stuGrade').selectedOptions[0].text;
     document.getElementById('resTotal').innerText = document.getElementById('estTotal').innerText;
     document.getElementById('resInst').innerText = document.getElementById('estInstallment').innerText;
-    const resNotice = document.getElementById('resPartCNotice');
-    if(isC) { resNotice.style.display = 'block'; resNotice.innerText = `★ Part C 日期：${PART_C_DATES[gVal==='secondary'?'secondary':'primary']} ★`; } else { resNotice.style.display = 'none'; }
+    if(isC) { document.getElementById('resPartCNotice').style.display = 'block'; document.getElementById('resPartCNotice').innerText = `★ Part C 日期：${PART_C_DATES[gVal==='secondary'?'secondary':'primary']} ★`; } else { document.getElementById('resPartCNotice').style.display = 'none'; }
     document.getElementById('resSecAContainer').style.display = selA.size > 0 ? 'block' : 'none';
     document.getElementById('resSecBContainer').style.display = selB.size > 0 ? 'block' : 'none';
     if(selA.size > 0) renderCal('resCalA', SCHEDULE_MASTER[DATA_GROUP[gVal]].A, selA, 'planA', '', true);
@@ -298,19 +321,12 @@ function submitAndGoToStep3() {
     document.getElementById('page3').classList.add('active');
 }
 
-function saveRecord() {
-    const r = { name: document.getElementById('stuName').value, gender: document.getElementById('stuGender').value, gradeText: document.getElementById('stuGrade').selectedOptions[0].text, level: (document.getElementById('stuGrade').value === 'secondary') ? '中學' : '小學', total: document.getElementById('estTotal').innerText, countA: selA.size, countB: selB.size, detailsA: Array.from(selA), detailsB: Array.from(selB), hasPartC: document.getElementById('planC').checked, timestamp: new Date().toLocaleString() };
-    let records = JSON.parse(localStorage.getItem('summerRegistration')) || [];
-    records.push(r); localStorage.setItem('summerRegistration', JSON.stringify(records));
-}
-
 function toggleAdmin() { if (prompt("密碼：") === "8888") { document.getElementById('adminPanel').style.display = 'block'; refreshAdmin(); } }
 
 function refreshAdmin() {
     let records = JSON.parse(localStorage.getItem('summerRegistration')) || [];
     records.sort((a, b) => (GRADE_ORDER[a.gradeText] || 99) - (GRADE_ORDER[b.gradeText] || 99));
-    const tbody = document.querySelector('#recordTable tbody');
-    tbody.innerHTML = '';
+    const tbody = document.querySelector('#recordTable tbody'); tbody.innerHTML = '';
     let totRev = 0, pBoy = 0, pGirl = 0, sBoy = 0, sGirl = 0;
     records.forEach(r => {
         totRev += Number(r.total);
@@ -355,7 +371,6 @@ function exportCSV() {
 const SCHEDULE_MASTER = {
     p1p3p6: {
         A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語",ox:true},{d:"07/01(三)",s:"假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語",ox:true},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
-        // 修復：小學 Part B 08/07 更改為「不開放」
         B: [{d:"07/20(一)",s:"英文"},{d:"07/21(二)",s:"英文"},{d:"07/22(三)",s:"英文"},{d:"07/23(四)",s:"英文"},{d:"07/24(五)",s:"英文"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文作"},{d:"07/29(三)",s:"英文作"},{d:"07/30(四)",s:"英文作"},{d:"07/31(五)",s:"英文作"},{d:"08/03(一)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"中文作"},{d:"08/06(四)",s:"中文作"},{d:"08/07(五)",s:"不開放",h:true},{d:"08/10(一)",s:"中文"},{d:"08/11(二)",s:"中文"},{d:"08/12(三)",s:"中文"},{d:"08/13(四)",s:"中文"},{d:"08/14(五)",s:"中文"},{d:"08/17(一)",s:"數學"},{d:"08/18(二)",s:"數學"},{d:"08/19(三)",s:"數學"},{d:"08/20(四)",s:"數學"},{d:"08/21(五)",s:"數學"},{d:"08/24(一)",s:"常識"},{d:"08/25(二)",s:"常識"},{d:"08/26(三)",s:"常識"},{d:"08/27(四)",s:"常識"},{d:"08/28(五)",s:"常識"}]
     },
     p4p5: {
@@ -364,7 +379,6 @@ const SCHEDULE_MASTER = {
     },
     secondary: {
         A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"數學"},{d:"06/25(四)",s:"數學"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"科學"},{d:"06/30(二)",s:"科學"},{d:"07/01(三)",s:"假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"文言文"},{d:"07/14(二)",s:"文言文"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)","s":"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
-        // 修復：中學 Part B 補回 14/08(五) 的顯示
         B: [{d:"07/20(一)",s:"數學"},{d:"07/21(二)",s:"中文週"},{d:"07/22(三)",s:"中文週"},{d:"07/23(四)",s:"中文週"},{d:"07/24(五)",s:"中文週"},{d:"07/27(一)",s:"中文週"},{d:"07/28(二)",s:"中文週"},{d:"07/29(三)",s:"英文週"},{d:"07/30(四)",s:"英文週"},{d:"07/31(五)",s:"英文週"},{d:"08/03(一)",s:"英文週"},{d:"08/04(二)",s:"英文週"},{d:"08/05(三)",s:"英文週"},{d:"08/06(四)",s:"英文週"},{d:"08/07(五)",s:"不開放",h:true},{d:"08/10(一)",s:"地史"},{d:"08/11(二)",s:"地史"},{d:"08/12(三)",s:"地史"},{d:"08/13(四)",s:"地史"},{d:"08/14(五)",s:"不開放",h:true},{d:"08/17(一)",s:"數學週"},{d:"08/18(二)",s:"數學週"},{d:"08/19(三)",s:"數學週"},{d:"08/20(四)",s:"數學週"},{d:"08/21(五)",s:"數學週"},{d:"08/24(一)",s:"科學史"},{d:"08/25(二)",s:"科學史"},{d:"08/26(三)",s:"科學史"},{d:"08/27(四)",s:"科學史"},{d:"08/28(五)",s:"科學史"}]
     }
 };
