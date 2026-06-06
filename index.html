@@ -32,7 +32,7 @@
         .btn { background: var(--accent-blue); color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; width: 100%; margin-top: 15px; }
         input, select { padding: 12px; width: 100%; margin-top: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 1em; }
         
-        /* 後台與彈窗樣式 */
+        /* 后台與彈窗樣式 */
         #adminPanel { background: var(--light-panel-bg); padding: 25px; border-radius: 12px; border: 2px solid var(--border-color); margin-top: 50px; display: none; }
         .stat-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
         .stat-badge { padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 0.9em; color: white; text-align: center; min-width: 120px; }
@@ -103,7 +103,7 @@
             <select id="stuGender"><option value="男">男</option><option value="女">女</option></select>
             <select id="stuGrade" onchange="updateEstimates()">
                 <option value="p1">升小一</option><option value="p2">升小二</option><option value="p3">升小三</option>
-                <option value="p4">升小外</option><option value="p5">升小五</option><option value="p6">升小六</option>
+                <option value="p4">升小四</option><option value="p5">升小五</option><option value="p6">升小六</option>
                 <option value="secondary">升中一或以上</option>
             </select>
         </div>
@@ -213,15 +213,15 @@ const PRICING = {
 const GRADE_ORDER = { "升小一":1, "升小二":2, "升小三":3, "升小四":4, "升小五":5, "升小六":6, "升中一或以上":7 };
 const DATA_GROUP = { p1:"p1p3p6", p2:"p1p3p6", p3:"p1p3p6", p6:"p1p3p6", p4:"p4p5", p5:"p4p5", secondary:"secondary" };
 
-// 核心時間軸資料結構：精準定義 2026 暑期每一週一至週五的真實日曆序列
+// 核心時間軸資料結構
 const FULL_CALENDAR_AXIS = {
     "06": [
-        {type:"empty"}, {type:"empty"}, {type:"empty"}, {type:"empty"}, {type:"empty"}, // 第一週前段空白 (1-19號非暑期)
+        {type:"empty"}, {type:"empty"}, {type:"empty"}, {type:"empty"}, {type:"empty"}, 
         {type:"data", d:"06/22(一)"}, {type:"data", d:"06/23(二)"}, {type:"data", d:"06/24(三)"}, {type:"data", d:"06/25(四)"}, {type:"data", d:"06/26(五)"},
         {type:"data", d:"06/29(一)"}, {type:"data", d:"06/30(二)"}
     ],
     "07": [
-        {type:"empty"}, {type:"empty"}, // 7/1是週三，前面週一週二留空補位
+        {type:"empty"}, {type:"empty"}, 
         {type:"data", d:"07/01(三)"}, {type:"data", d:"07/02(四)"}, {type:"data", d:"07/03(五)"},
         {type:"data", d:"07/06(一)"}, {type:"data", d:"07/07(二)"}, {type:"data", d:"07/08(三)"}, {type:"data", d:"07/09(四)"}, {type:"data", d:"07/10(五)"},
         {type:"data", d:"07/13(一)"}, {type:"data", d:"07/14(二)"}, {type:"data", d:"07/15(三)"}, {type:"data", d:"07/16(四)"}, {type:"data", d:"07/17(五)"},
@@ -299,7 +299,6 @@ function triggerNoticeFromAdmin(index) {
     buildParentNoticeCalendar(r.name, r.gradeText, r.total, inst, r.detailsA || [], r.detailsB || []);
 }
 
-// 1️⃣ 徹底修正：家長個人化「完美強制對齊星期一」月曆通知書
 function buildParentNoticeCalendar(name, gradeText, total, inst, arrA, arrB) {
     document.getElementById('parentNoticeModal').style.display = 'block';
     document.body.className = 'print-mode-notice';
@@ -321,7 +320,6 @@ function buildParentNoticeCalendar(name, gradeText, total, inst, arrA, arrB) {
 
         let grid = document.createElement('div'); grid.className = 'calendar-grid';
         
-        // 依據精準時間軸進行渲染
         FULL_CALENDAR_AXIS[m].forEach(cell => {
             let box = document.createElement('div');
             if (cell.type === "empty") {
@@ -332,7 +330,6 @@ function buildParentNoticeCalendar(name, gradeText, total, inst, arrA, arrB) {
                 let subB = SCHEDULE_MASTER[group].B.find(x => x.d === cell.d);
                 let hasA = setA.has(cell.d), hasB = setB.has(cell.d);
                 
-                // 假期特殊判斷
                 let isHoliday = (subA && subA.h) || (subB && subB.h);
                 
                 if (isHoliday) {
@@ -352,7 +349,6 @@ function buildParentNoticeCalendar(name, gradeText, total, inst, arrA, arrB) {
     });
 }
 
-// 2️⃣ 徹底修正：導師全體學生「完美強制對齊星期一」大點名月曆看板
 function showDailyModal() {
     document.getElementById('dailyListModal').style.display = 'block';
     document.body.className = 'print-mode-daily';
@@ -391,7 +387,6 @@ function showDailyModal() {
                         }
                     });
                     
-                    // 檢查是否是公眾假期
                     let isH = (SCHEDULE_MASTER.p1p3p6.A.find(x=>x.d===cell.d) && SCHEDULE_MASTER.p1p3p6.A.find(x=>x.d===cell.d).h) || (SCHEDULE_MASTER.p1p3p6.B.find(x=>x.d===cell.d) && SCHEDULE_MASTER.p1p3p6.B.find(x=>x.d===cell.d).h);
 
                     if (isH) {
@@ -443,11 +438,11 @@ const SCHEDULE_MASTER = {
         B: [{d:"07/20(一)",s:"英文"},{d:"07/21(二)",s:"英文"},{d:"07/22(三)",s:"英文"},{d:"07/23(四)",s:"英文"},{d:"07/24(五)",s:"英文"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文作"},{d:"07/29(三)",s:"英文作"},{d:"07/30(四)",s:"英文作"},{d:"07/31(五)",s:"英文作"},{d:"08/03(一)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"中文作"},{d:"08/06(四)",s:"中文作"},{d:"08/07(五)",s:"中心不開放",h:true},{d:"08/10(一)",s:"中文"},{d:"08/11(二)",s:"中文"},{d:"08/12(三)",s:"中文"},{d:"08/13(四)",s:"中文"},{d:"08/14(五)",s:"中文"},{d:"08/17(一)",s:"數學"},{d:"08/18(二)",s:"數學"},{d:"08/19(三)",s:"數學"},{d:"08/20(四)",s:"數學"},{d:"08/21(五)",s:"數學"},{d:"08/24(一)",s:"常識"},{d:"08/25(二)",s:"常識"},{d:"08/26(三)",s:"常識"},{d:"08/27(四)",s:"常識"},{d:"08/28(五)",s:"常識"}]
     },
     p4p5: {
-        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語",ox:true},{d:"07/01(三)",s:"特區紀念日",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語",ox:true},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
-        B: [{d:"07/20(一)",s:"中文"},{d:"07/21(二)",s:"中文"},{d:"07/22(三)",s:"中文"},{d:"07/23(四)",s:"中文"},{d:"07/24(五)",s:"模考"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文"},{d:"07/29(三)",s:"英文"},{d:"07/30(四)",s:"英文"},{d:"07/31(五)",s:"模考"},{d:"08/03(one)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"英文作"},{d:"08/06(four)",s:"英文作"},{d:"08/07(五)",s:"中心不開放",h:true},{d:"08/10(一)",s:"數學"},{d:"08/11(二)",s:"數學"},{d:"08/12(三)",s:"數學"},{d:"08/13(四)",s:"數學"},{d:"08/14(五)",s:"模考"},{d:"08/17(一)",s:"人文"},{d:"08/18(二)",s:"人文"},{d:"08/19(三)",s:"人文"},{d:"08/20(四)",s:"人文"},{d:"08/21(五)",s:"模考"},{d:"08/24(一)",s:"科學"},{d:"08/25(二)",s:"科學"},{d:"08/26(三)",s:"科學"},{d:"08/27(four)",s:"科學"},{d:"08/28(五)",s:"模考"}]
+        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語",ox:true},{d:"07/01(三)",s:"特區紀念日",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語",ox:true},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(four)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
+        B: [{d:"07/20(一)",s:"中文"},{d:"07/21(二)",s:"中文"},{d:"07/22(三)",s:"中文"},{d:"07/23(四)",s:"中文"},{d:"07/24(五)",s:"模考"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文"},{d:"07/29(三)",s:"英文"},{d:"07/30(四)",s:"英文"},{d:"07/31(五)",s:"模考"},{d:"08/03(一)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"英文作"},{d:"08/06(四)",s:"英文作"},{d:"08/07(五)",s:"中心不開放",h:true},{d:"08/10(one)",s:"數學"},{d:"08/11(二)",s:"數學"},{d:"08/12(三)",s:"數學"},{d:"08/13(四)",s:"數學"},{d:"08/14(五)",s:"模考"},{d:"08/17(一)",s:"人文"},{d:"08/18(二)",s:"人文"},{d:"08/19(三)",s:"人文"},{d:"08/20(四)",s:"人文"},{d:"08/21(五)",s:"模考"},{d:"08/24(一)",s:"科學"},{d:"08/25(二)",s:"科學"},{d:"08/26(三)",s:"科學"},{d:"08/27(四)",s:"科學"},{d:"08/28(五)",s:"模考"} ]
     },
     secondary: {
-        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"數學"},{d:"06/25(four)",s:"數學"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"科學"},{d:"06/30(二)",s:"科學"},{d:"07/01(三)",s:"特區紀念日",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(four)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"文言文"},{d:"07/14(二)",s:"文言文"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)","s":"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
+        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"數學"},{d:"06/25(四)",s:"數學"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"科學"},{d:"06/30(二)",s:"科學"},{d:"07/01(三)",s:"特區紀念日",h:true},{d:"07/02(four)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"文言文"},{d:"07/14(二)",s:"文言文"},{d:"07/15(三)",s:"英文作"},{d:"07/16(four)","s":"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
         B: [{d:"07/20(一)",s:"數學"},{d:"07/21(二)",s:"中文週"},{d:"07/22(三)",s:"中文週"},{d:"07/23(四)",s:"中文週"},{d:"07/24(五)",s:"中文週"},{d:"07/27(一)",s:"中文週"},{d:"07/28(二)",s:"中文週"},{d:"07/29(三)",s:"英文週"},{d:"07/30(四)",s:"英文週"},{d:"07/31(五)",s:"英文週"},{d:"08/03(一)",s:"英文週"},{d:"08/04(二)",s:"英文週"},{d:"08/05(三)",s:"英文週"},{d:"08/06(四)",s:"英文週"},{d:"08/07(五)",s:"中心不開放",h:true},{d:"08/10(一)",s:"地史"},{d:"08/11(二)",s:"地史"},{d:"08/12(三)",s:"地史"},{d:"08/13(four)",s:"地史"},{d:"08/14(五)",s:"中心不開放",h:true},{d:"08/17(一)",s:"數學週"},{d:"08/18(二)",s:"數學週"},{d:"08/19(三)",s:"數學週"},{d:"08/20(four)",s:"數學週"},{d:"08/21(五)",s:"數學週"},{d:"08/24(一)",s:"科學史"},{d:"08/25(二)",s:"科學史"},{d:"08/26(三)",s:"科學史"},{d:"08/27(four)",s:"科學史"},{d:"08/28(五)",s:"科學史"}]
     }
 };
