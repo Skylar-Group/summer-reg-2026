@@ -85,7 +85,7 @@
             .container, .no-print, .btn, .btn-admin-entrance, .btn-board { display: none !important; }
             body.print-mode-notice #parentNoticeModal { display: block !important; position: static !important; background: white !important; width: 100% !important; height: auto !important; overflow: visible !important; }
             body.print-mode-notice #parentNoticeModal .modal-content { width: 100% !important; height: auto !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; }
-            body.print-mode-daily #dailyListModal { display: block !important; position: static !important; background: white !important; width: 100% !important; height: auto !important; overflow: visible !important; }
+            body.print-mode-daily #dailyListModal { display: block !important; position: static !important; background: white !important; width: 100% height: auto !important; overflow: visible !important; }
             body.print-mode-daily #dailyListModal .modal-content { width: 100% !important; height: auto !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; overflow: visible !important; }
             body.print-mode-admin .container { display: block !important; box-shadow: none !important; padding: 0 !important; background: white !important; }
             body.print-mode-admin #adminPanel { display: block !important; visibility: visible !important; position: static !important; margin-top: 10px !important; opacity: 1 !important; }
@@ -112,6 +112,7 @@
         </div>
     </div>
 
+    <!-- 頁面 1 -->
     <div id="page1" class="page active">
         <h2>學生資料及方案</h2>
         <div class="section">
@@ -130,6 +131,7 @@
             <label>Part B (3小時/堂)</label>
             <select id="planB" onchange="updateEstimates()"><option value="0">不參加</option><option value="20">20 堂</option><option value="24">24 堂</option><option value="29">29 堂</option></select>
             
+            <!-- 特選自選課堂區塊 -->
             <div id="specialCourseBlock" style="display:none; margin-top:15px; padding:15px; background:#E8F5E9; border-radius:8px; border-left:5px solid #2e7d32;">
                 <h4 style="margin:0 0 10px 0; color:#2e7d32;">✨ 開放「特選自選課堂」獨立入口（2小時/堂）</h4>
                 <p style="font-size:13px; margin:0 0 10px 0; color:#555;">自選整點開始上課（開放10:00-17:00）。小學 $190/堂，中學 $210/堂（不設分期）。</p>
@@ -154,6 +156,7 @@
         <button class="btn" onclick="goToStep2()">下一步：選擇日期</button>
     </div>
 
+    <!-- 頁面 2 -->
     <div id="page2" class="page">
         <div id="studentInfoBar" style="background:#F5EFE6; padding:10px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:10px;"></div>
         <div class="section" style="background:#FFFFFF;">
@@ -167,6 +170,7 @@
         <button class="btn" onclick="submitAndGoToStep3()">確認報名並送出雲端</button>
     </div>
 
+    <!-- 頁面 3 -->
     <div id="page3" class="page">
         <div class="section">
             <h3 style="color:#2e7d32; text-align:center;">🎉 報名資料已成功送出雲端！</h3>
@@ -186,6 +190,7 @@
         </div>
     </div>
 
+    <!-- 後台面板 -->
     <div id="adminPanel">
         <div id="syncStatus" class="sync-loader" style="display:none;">☁ 正在同步雲端數據...</div>
         <div class="stat-group" id="statContainer"></div>
@@ -217,6 +222,7 @@
     </div>
 </div>
 
+<!-- 家長通知書彈窗 -->
 <div id="parentNoticeModal">
     <div class="modal-content">
         <div style="text-align:center; border-bottom:3px solid #4A6D8C; padding-bottom:10px; margin-bottom:15px;">
@@ -238,6 +244,7 @@
     </div>
 </div>
 
+<!-- 導師全體大看板彈窗 -->
 <div id="dailyListModal">
     <div class="modal-content">
         <div style="display:flex; justify-content: space-between; align-items:center; border-bottom:2px solid #333; padding-bottom:10px; margin-bottom:15px;">
@@ -284,24 +291,60 @@ const FULL_CALENDAR_AXIS = {
         {type:"data", d:"08/03(一)"}, {type:"data", d:"08/04(二)"}, {type:"data", d:"08/05(三)"}, {type:"data", d:"08/06(四)"}, {type:"data", d:"08/07(五)",h:true},
         {type:"data", d:"08/10(一)"}, {type:"data", d:"08/11(二)"}, {type:"data", d:"08/12(三)"}, {type:"data", d:"08/13(四)"}, {type:"data", d:"08/14(五)"},
         {type:"data", d:"08/17(一)"}, {type:"data", d:"08/18(二)"}, {type:"data", d:"08/19(三)"}, {type:"data", d:"08/20(四)"}, {type:"data", d:"08/21(五)"},
-        {type:"data", d:"08/24(一)"}, {type:"data", d:"08/25(二)"}, {type:"data", d:"08/26(三)"}, {type:"data", d:"08/27(四)"}, {type:"data", d:"08/28(五)"}
+        {type:"data", d:"08/24(一)"}, {type:"data", d:"08/25(二)"}, {type:"data", d:"08/26(三)"}, {type:"data", d:"08/27(四)",s:"科學史"}, {type:"data", d:"08/28(五)"}
     ]
 };
 
 const SCHEDULE_MASTER = {
     p1p3p6: {
-        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語"},{d:"07/01(三)",s:"假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(four)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語"},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
-        B: [{d:"07/20(一)",s:"英文"},{d:"07/21(二)",s:"英文"},{d:"07/22(三)",s:"英文"},{d:"07/23(four)",s:"英文"},{d:"07/24(五)",s:"英文"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文作"},{d:"07/29(三)",s:"英文作"},{d:"07/30(four)",s:"英文作"},{d:"07/31(五)",s:"英文作"},{d:"08/03(一)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"中文作"},{d:"08/06(四)",s:"中文作"},{d:"08/07(五)",s:"假期",h:true},{d:"08/10(一)",s:"中文"},{d:"08/11(二)",s:"中文"},{d:"08/12(三)",s:"中文"},{d:"08/13(四)",s:"中文"},{d:"08/14(五)",s:"中文"},{d:"08/17(一)",s:"數學"},{d:"08/18(二)",s:"數學"},{d:"08/19(三)",s:"數學"},{d:"08/20(四)",s:"數學"},{d:"08/21(五)",s:"數學"},{d:"08/24(一)",s:"常識"},{d:"08/25(二)",s:"常識"},{d:"08/26(三)",s:"常識"},{d:"08/27(四)",s:"常識"},{d:"08/28(五)",s:"常識"}]
+        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語"},{d:"07/01(三)",s:"假期",h:true},{d:"07/02(four)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語"},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
+        B: [{d:"07/20(一)",s:"英文"},{d:"07/21(二)",s:"英文"},{d:"07/22(三)",s:"英文"},{d:"07/23(四)",s:"英文"},{d:"07/24(五)",s:"英文"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文作"},{d:"07/29(三)",s:"英文作"},{d:"07/30(四)",s:"英文作"},{d:"07/31(五)",s:"英文作"},{d:"08/03(一)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"中文作"},{d:"08/06(four)",s:"中文作"},{d:"08/07(五)",s:"假期",h:true},{d:"08/10(一)",s:"中文"},{d:"08/11(二)",s:"中文"},{d:"08/12(三)",s:"中文"},{d:"08/13(四)",s:"中文"},{d:"08/14(五)",s:"中文"},{d:"08/17(一)",s:"數學"},{d:"08/18(二)",s:"數學"},{d:"08/19(三)",s:"數學"},{d:"08/20(四)",s:"數學"},{d:"08/21(五)",s:"數學"},{d:"08/24(一)",s:"常識"},{d:"08/25(二)",s:"常識"},{d:"08/26(三)",s:"常識"},{d:"08/27(四)",s:"常識"},{d:"08/28(五)",s:"常識"}]
     },
     p4p5: {
-        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語"},{d:"07/01(三)",s:"假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語"},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
-        B: [{d:"07/20(一)",s:"中文"},{d:"07/21(二)",s:"中文"},{d:"07/22(三)",s:"中文"},{d:"07/23(四)",s:"中文"},{d:"07/24(五)",s:"模考"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文"},{d:"07/29(三)",s:"英文"},{d:"07/30(四)",s:"英文"},{d:"07/31(五)",s:"模考"},{d:"08/03(一)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"英文作"},{d:"08/06(四)",s:"英文作"},{d:"08/07(五)",s:"假期",h:true},{d:"08/10(一)",s:"數學"},{d:"08/11(二)",s:"數學"},{d:"08/12(三)",s:"數學"},{d:"08/13(four)",s:"數學"},{d:"08/14(五)",s:"模考"},{d:"08/17(一)",s:"人文"},{d:"08/18(二)",s:"人文"},{d:"08/19(三)",s:"人文"},{d:"08/20(四)",s:"人文"},{d:"08/21(五)",s:"模考"},{d:"08/24(一)",s:"科學"},{d:"08/25(二)",s:"科學"},{d:"08/26(三)",s:"科學"},{d:"08/27(四)",s:"科學"},{d:"08/28(五)",s:"模考"}]
+        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(one)",s:"詞語"},{d:"06/30(二)",s:"英語"},{d:"07/01(三)",s:"假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語"},{d:"07/14(二)",s:"英文閱"},{d:"07/15(three)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
+        B: [{d:"07/20(一)",s:"中文"},{d:"07/21(二)",s:"中文"},{d:"07/22(三)",s:"中文"},{d:"07/23(四)",s:"中文"},{d:"07/24(五)",s:"模考"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文"},{d:"07/29(三)",s:"英文"},{d:"07/30(四)",s:"英文"},{d:"07/31(五)",s:"模考"},{d:"08/03(一)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"英文作"},{d:"08/06(four)",s:"英文作"},{d:"08/07(五)",s:"假期",h:true},{d:"08/10(一)",s:"數學"},{d:"08/11(二)",s:"數學"},{d:"08/12(三)",s:"數學"},{d:"08/13(四)",s:"數學"},{d:"08/14(五)",s:"模考"},{d:"08/17(一)",s:"人文"},{d:"08/18(二)",s:"人文"},{d:"08/19(三)",s:"人文"},{d:"08/20(four)",s:"人文"},{d:"08/21(五)",s:"模考"},{d:"08/24(一)",s:"科學"},{d:"08/25(二)",s:"科學"},{d:"08/26(三)",s:"科學"},{d:"08/27(四)",s:"科學"},{d:"08/28(五)",s:"模考"}]
     },
     secondary: {
-        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"數學"},{d:"06/25(四)",s:"數學"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"科學"},{d:"06/30(二)",s:"科學"},{d:"07/01(三)",s:"假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"文言文"},{d:"07/14(二)",s:"文言文"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
-        B: [{d:"07/20(一)",s:"數學"},{d:"07/21(二)",s:"中文週"},{d:"07/22(三)",s:"中文週"},{d:"07/23(四)",s:"中文週"},{d:"07/24(五)",s:"中文週"},{d:"07/27(一)",s:"中文週"},{d:"07/28(二)",s:"中文週"},{d:"07/29(三)",s:"英文週"},{d:"07/30(四)",s:"英文週"},{d:"07/31(五)",s:"英文週"},{d:"08/03(一)",s:"英文週"},{d:"08/04(二)",s:"英文週"},{d:"08/05(三)",s:"英文週"},{d:"08/06(four)",s:"英文週"},{d:"08/07(五)",s:"假期",h:true},{d:"08/10(一)",s:"地史"},{d:"08/11(二)",s:"地史"},{d:"08/12(三)",s:"地史"},{d:"08/13(四)",s:"地史"},{d:"08/14(五)",s:"中心不開放",h:true},{d:"08/17(一)",s:"數學週"},{d:"08/18(二)",s:"數學週"},{d:"08/19(三)",s:"數學週"},{d:"08/20(四)",s:"數學週"},{d:"08/21(五)",s:"數學週"},{d:"08/24(一)",s:"科學史"},{d:"08/25(二)",s:"科學史"},{d:"08/26(三)",s:"科學史"},{d:"08/27(four)",s:"科學史"},{d:"08/28(五)",s:"科學史"}]
+        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"數學"},{d:"06/25(四)",s:"數學"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"科學"},{d:"06/30(二)",s:"科學"},{d:"07/01(三)",s:"假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(four)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"文言文"},{d:"07/14(二)",s:"文言文"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
+        B: [{d:"07/20(一)",s:"數學"},{d:"07/21(二)",s:"中文週"},{d:"07/22(三)",s:"中文週"},{d:"07/23(four)",s:"中文週"},{d:"07/24(五)",s:"中文週"},{d:"07/27(一)",s:"中文週"},{d:"07/28(二)",s:"中文週"},{d:"07/29(三)",s:"英文週"},{d:"07/30(four)",s:"英文週"},{d:"07/31(五)",s:"英文週"},{d:"08/03(一)",s:"英文週"},{d:"08/04(二)",s:"英文週"},{d:"08/05(三)",s:"英文週"},{d:"08/06(four)",s:"英文週"},{d:"08/07(五)",s:"假期",h:true},{d:"08/10(one)",s:"地史"},{d:"08/11(二)",s:"地史"},{d:"08/12(三)",s:"地史"},{d:"08/13(four)",s:"地史"},{d:"08/14(五)",s:"中心不開放",h:true},{d:"08/17(一)",s:"數學週"},{d:"08/18(二)",s:"數學週"},{d:"08/19(three)",s:"數學週"},{d:"08/20(four)",s:"數學週"},{d:"08/21(五)",s:"數學週"},{d:"08/24(一)",s:"科學史"},{d:"08/25(二)",s:"科學史"},{d:"08/26(三)",s:"科學史"},{d:"08/27(four)",s:"科學史"},{d:"08/28(五)",s:"科學史"}]
     }
 };
+
+function safeParseArray(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+        let t = val.trim();
+        if (t.startsWith('[')) { try { return JSON.parse(t); } catch(e){} }
+        return t.split(',').map(x => x.trim()).filter(Boolean);
+    }
+    return [];
+}
+
+function safeParseObject(val) {
+    if (!val) return {};
+    if (typeof val === 'object' && !Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+        let t = val.trim();
+        if (t.startsWith('{')) {
+            try {
+                let parsed = JSON.parse(t);
+                if (typeof parsed === 'string') parsed = JSON.parse(parsed);
+                return parsed;
+            } catch(e){}
+        }
+    }
+    return {};
+}
+
+function preprocessRecords(records) {
+    return records.map(r => {
+        r.detailsA = safeParseArray(r.detailsA);
+        r.detailsB = safeParseArray(r.detailsB);
+        r.specialDetails = safeParseObject(r.specialDetails);
+        return r;
+    });
+}
 
 function updateEstimates() {
     try {
@@ -522,19 +565,11 @@ function triggerNoticeFromAdmin(index) {
     currentEditingIndex = index; cancelRescheduleMode();
     const r = cloudRecords[index]; if(!r) return alert("無法讀取此紀錄");
     
-    let rawSP = r.specialDetails || {}; 
-    if (typeof rawSP === 'string' && rawSP.trim() !== "") { 
-        try { 
-            rawSP = JSON.parse(rawSP); 
-            if (typeof rawSP === 'string') rawSP = JSON.parse(rawSP); 
-        } catch(e) { rawSP = {}; } 
-    }
-    
     let instStr = "";
     if (Number(r.countA||0)===0 && Number(r.countB||0)===0) { instStr = `$${r.total} (特選方案需全付，不設分期)`; } 
     else { instStr = `$${Math.round(Number(r.total)/6)} x 6期`; }
     
-    buildParentNoticeCalendar(r.name, r.gradeText, r.total, instStr, r.detailsA || [], r.detailsB || [], true, rawSP);
+    buildParentNoticeCalendar(r.name, r.gradeText, r.total, instStr, r.detailsA, r.detailsB, true, r.specialDetails);
 }
 
 function cancelRescheduleMode() {
@@ -548,17 +583,14 @@ function startRescheduleMode(oldDate, partType) {
     rescheduleActiveState = { isMode: true, oldDate: oldDate, partType: partType };
     document.getElementById('rescheduleNoticeBar').innerHTML = `🚀 <b>已鎖定欲調動課堂：${oldDate}</b> -> 請滑鼠直接點擊下方的任何一個<b>黃色虛線格子</b>完成位置對調。`;
     const r = cloudRecords[currentEditingIndex];
-    let studentSP = r.specialDetails || {}; 
-    if (typeof studentSP === 'string' && studentSP.trim() !== "") { try { studentSP = JSON.parse(studentSP); if(typeof studentSP === 'string') studentSP = JSON.parse(studentSP); } catch(e){} }
-    const setA = new Set(r.detailsA || []); const setB = new Set(r.detailsB || []);
     
     document.querySelectorAll('.notice-cal-day').forEach(el => {
         const dateStr = el.getAttribute('data-date'); if (!dateStr) return;
         let isH = dateStr.includes("07/01") || dateStr.includes("08/07");
         let isValid = false;
-        if (partType === 'A' && !isH && !setA.has(dateStr)) isValid = true;
-        if (partType === 'B' && !isH && !setB.has(dateStr)) isValid = true;
-        if (partType === 'SP' && !isH && !studentSP[dateStr]) isValid = true;
+        if (partType === 'A' && !isH && (!r.detailsA || !r.detailsA.includes(dateStr))) isValid = true;
+        if (partType === 'B' && !isH && (!r.detailsB || !r.detailsB.includes(dateStr))) isValid = true;
+        if (partType === 'SP' && !isH && (!r.specialDetails || !r.specialDetails[dateStr])) isValid = true;
         if (isValid) el.classList.add('reschedule-targetable');
     });
 }
@@ -572,7 +604,7 @@ function buildParentNoticeCalendar(name, gradeText, total, inst, arrA, arrB, isA
     
     const container = document.getElementById('noticeCalendarContainer'); container.innerHTML = '';
     const group = getScheduleGroup(gradeText);
-    const setA = new Set(arrA), setB = new Set(arrB);
+    const setA = new Set(arrA || []), setB = new Set(arrB || []);
 
     Object.keys(FULL_CALENDAR_AXIS).forEach(m => {
         let title = document.createElement('div'); title.className = 'month-section-title'; title.innerText = `2026年 ${m}月`; container.appendChild(title);
@@ -612,19 +644,16 @@ function buildParentNoticeCalendar(name, gradeText, total, inst, arrA, arrB, isA
 
 function executeClickReschedule(targetNewDate) {
     const r = cloudRecords[currentEditingIndex]; const oldDate = rescheduleActiveState.oldDate; const partType = rescheduleActiveState.partType;
-    let studentSP = r.specialDetails || {}; 
-    if (typeof studentSP === 'string' && studentSP.trim() !== "") { try { studentSP = JSON.parse(studentSP); if(typeof studentSP === 'string') studentSP = JSON.parse(studentSP); } catch(e){} }
 
     if (partType === 'A') { r.detailsA.splice(r.detailsA.indexOf(oldDate), 1); r.detailsA.push(targetNewDate); }
     else if (partType === 'B') { r.detailsB.splice(r.detailsB.indexOf(oldDate), 1); r.detailsB.push(targetNewDate); }
     else if (partType === 'SP') {
-        let savedTime = studentSP[oldDate] || "10:00-12:00";
-        delete studentSP[oldDate];
-        studentSP[targetNewDate] = savedTime; 
+        let savedTime = r.specialDetails[oldDate] || "10:00-12:00";
+        delete r.specialDetails[oldDate];
+        r.specialDetails[targetNewDate] = savedTime; 
     }
-    r.specialDetails = JSON.stringify(studentSP);
 
-    const syncPayload = { action: "update_schedule", timestamp: r.timestamp, detailsA: r.detailsA, detailsB: r.detailsB, specialDetails: r.specialDetails };
+    const syncPayload = { action: "update_schedule", timestamp: r.timestamp, detailsA: r.detailsA, detailsB: r.detailsB, specialDetails: JSON.stringify(r.specialDetails) };
     fetch(scriptURL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(syncPayload) });
 
     alert("🎉 行政點擊調堂成功，已同步雲端！"); cancelRescheduleMode(); triggerNoticeFromAdmin(currentEditingIndex); renderAdminTable(cloudRecords);
@@ -657,41 +686,37 @@ function generateDailyBoardHtml(targetType) {
             let tagsHtml = "";
             cloudRecords.forEach(r => {
                 let g = r.gradeText || "";
-                let arrA = r.detailsA || [];
-                let arrB = r.detailsB || [];
-                let studentSP = r.specialDetails || {}; 
-                if (typeof studentSP === 'string' && studentSP.trim() !== "") { try { studentSP = JSON.parse(studentSP); if(typeof studentSP === 'string') studentSP = JSON.parse(studentSP); } catch(e){} }
                 
                 if (targetType === "A") {
-                    if (arrA.includes(cell.d)) {
+                    if (r.detailsA && r.detailsA.includes(cell.d)) {
                         tagsHtml += `<span class="cal-student-tag tag-a">${r.name} (${g})</span>`;
                     }
-                    if (studentSP && studentSP[cell.d]) {
-                        let startHour = parseInt(studentSP[cell.d].split(":")[0], 10);
+                    if (r.specialDetails && r.specialDetails[cell.d]) {
+                        let startHour = parseInt(r.specialDetails[cell.d].split(":")[0], 10);
                         if (startHour < 13) {
-                            tagsHtml += `<span class="cal-student-tag tag-sp">⭐ [特選] ${r.name} (${studentSP[cell.d]})</span>`;
+                            tagsHtml += `<span class="cal-student-tag tag-sp">⭐ [特選] ${r.name} (${r.specialDetails[cell.d]})</span>`;
                         }
                     }
                 }
                 else if (targetType === "B_AM") {
-                    if (arrB.includes(cell.d) && (g.includes('二') || g.includes('五') || g.includes('六'))) {
+                    if (r.detailsB && r.detailsB.includes(cell.d) && (g.includes('二') || g.includes('五') || g.includes('六'))) {
                         tagsHtml += `<span class="cal-student-tag tag-bam">${r.name} (${g})</span>`;
                     }
-                    if (studentSP && studentSP[cell.d]) {
-                        let startHour = parseInt(studentSP[cell.d].split(":")[0], 10);
+                    if (r.specialDetails && r.specialDetails[cell.d]) {
+                        let startHour = parseInt(r.specialDetails[cell.d].split(":")[0], 10);
                         if (startHour < 13) {
-                            tagsHtml += `<span class="cal-student-tag tag-sp">⭐ [特選] ${r.name} (${studentSP[cell.d]})</span>`;
+                            tagsHtml += `<span class="cal-student-tag tag-sp">⭐ [特選] ${r.name} (${r.specialDetails[cell.d]})</span>`;
                         }
                     }
                 }
                 else if (targetType === "B_PM") {
-                    if (arrB.includes(cell.d) && (g.includes('一') || g.includes('三') || g.includes('四') || g.includes('中'))) {
+                    if (r.detailsB && r.detailsB.includes(cell.d) && (g.includes('一') || g.includes('三') || g.includes('四') || g.includes('中'))) {
                         tagsHtml += `<span class="cal-student-tag tag-bpm">${r.name} (${g})</span>`;
                     }
-                    if (studentSP && studentSP[cell.d]) {
-                        let startHour = parseInt(studentSP[cell.d].split(":")[0], 10);
+                    if (r.specialDetails && r.specialDetails[cell.d]) {
+                        let startHour = parseInt(r.specialDetails[cell.d].split(":")[0], 10);
                         if (startHour >= 13) {
-                            tagsHtml += `<span class="cal-student-tag tag-sp">⭐ [特選] ${r.name} (${studentSP[cell.d]})</span>`;
+                            tagsHtml += `<span class="cal-student-tag tag-sp">⭐ [特選] ${r.name} (${r.specialDetails[cell.d]})</span>`;
                         }
                     }
                 }
@@ -706,7 +731,12 @@ function generateDailyBoardHtml(targetType) {
 
 function refreshFromSheets() {
     document.getElementById('syncStatus').style.display = 'block';
-    fetch(scriptURL).then(res => res.json()).then(data => { cloudRecords = data; renderAdminTable(data); renderStats(data); document.getElementById('syncStatus').style.display = 'none'; });
+    fetch(scriptURL).then(res => res.json()).then(data => { 
+        cloudRecords = preprocessRecords(data); 
+        renderAdminTable(cloudRecords); 
+        renderStats(cloudRecords); 
+        document.getElementById('syncStatus').style.display = 'none'; 
+    });
 }
 
 function renderStats(records) {
