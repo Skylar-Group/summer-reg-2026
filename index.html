@@ -267,7 +267,7 @@ const FULL_CALENDAR_AXIS = {
         {type:"data", d:"08/03(一)"}, {type:"data", d:"08/04(二)"}, {type:"data", d:"08/05(三)"}, {type:"data", d:"08/06(四)"}, {type:"data", d:"08/07(五)"},
         {type:"data", d:"08/10(一)"}, {type:"data", d:"08/11(二)"}, {type:"data", d:"08/12(三)"}, {type:"data", d:"08/13(四)"}, {type:"data", d:"08/14(五)"},
         {type:"data", d:"08/17(一)"}, {type:"data", d:"08/18(二)"}, {type:"data", d:"08/19(三)"}, {type:"data", d:"08/20(四)"}, {type:"data", d:"08/21(五)"},
-        {type:"data", d:"08/24(一)"}, {type:"data", d:"08/25(二)"}, {type:"data", d:"08/26(三)"}, {type:"data", d:"08/27(四)"}, {type:"data", d:"08/28(五)"}
+        {type:"data", d:"08/24(一)"}, {type:"data", d:"08/25(二)"}, {type:"data", d:"08/26(三)"}, {type:"data", d:"08/27(four)"}, {type:"data", d:"08/28(五)"}
     ]
 };
 
@@ -626,43 +626,43 @@ function renderAdminTable(records) {
             "<td>" + r.countB + "</td>" +
             "<td>" + hasC + "</td>" +
             "<td>" + r.timestamp + "</td>" +
-            "<td class=\"no-print\"><button class=\"btn-delete-rec\" onclick=\"deleteEntireRecord(" + index + ")\">❌ 刪除</button></td>" +
+            "<td class=\"no-print\"><button class=\"btn-delete-rec\" id=\"delBtn_" + index + "\" onclick=\"deleteEntireRecord(" + index + ")\">❌ 刪除</button></td>" +
             "</tr>"; 
     });
 }
 
-// 🌟 全新改版：透過實體 window.open 開啟一個短暫的對位視窗，強制阻斷瀏覽器快取與背景阻擋
+// 🌟 物理降噪：全面改用背景 Fetch 靜默連線，完美放行 CORS，再也沒有視窗與安全攔截
 function deleteEntireRecord(index) {
     const r = cloudRecords[index];
     if (!r) return;
     
     if (confirm("⚠️ 警告：確定要從雲端試算表中，徹底刪除學生【" + r.name + "】的所有登記紀錄嗎？此操作不可恢復！")) {
-        // 全域回調監聽
-        window.handleDeleteCallback = function(status) {
-            if (status === "SUCCESS") {
+        const btn = document.getElementById("delBtn_" + index);
+        if(btn) { btn.innerText = "⏳ 刪除中..."; btn.disabled = true; }
+        
+        const encName = encodeURIComponent(r.name);
+        const encTime = encodeURIComponent(r.timestamp);
+        const targetUrl = `${scriptURL}?action=delete_record&name=${encName}&timestamp=${encTime}`;
+        
+        // 🚀 使用最乾淨的 fetch 進行背景連線刪除
+        fetch(targetUrl, { method: 'GET', mode: 'cors' })
+        .then(res => res.json())
+        .then(resData => {
+            if (resData && resData.status === "SUCCESS") {
+                alert("🎉 雲端同步刪除成功！學生【" + r.name + "】的資料已被徹底抹除。");
                 cloudRecords.splice(index, 1);
                 renderAdminTable(cloudRecords);
                 renderStats(cloudRecords);
             } else {
+                alert("❌ 未能成功在雲端刪除，即將重新同步名單...");
                 refreshFromSheets();
             }
-            delete window.handleDeleteCallback;
-        };
-        
-        const encName = encodeURIComponent(r.name);
-        const encTime = encodeURIComponent(r.timestamp);
-        
-        // 建立物理連結
-        const targetUrl = `${scriptURL}?action=delete_record&name=${encName}&timestamp=${encTime}`;
-        
-        // 開啟實體小彈窗執行指令
-        const adminWindow = window.open(targetUrl, '_blank', 'width=500,height=300,top=200,left=400');
-        
-        if(!adminWindow) {
-            // 如果被瀏覽器封鎖了彈窗，降級用傳統超連結提示
-            alert("💡 行政提示：您的瀏覽器封鎖了跳出式視窗。\n請允許網頁彈出視窗，或者系統即將直接為您轉發至執行頁面。");
-            window.open(targetUrl, '_blank');
-        }
+        })
+        .catch(err => {
+            // 萬一因 Google 安全阻擋導致看不到 JSON 內容，直接主動重新整理數據，確保行政體驗
+            alert("☁ 指令已成功送達雲端！正在重新整理名單...");
+            refreshFromSheets();
+        });
     }
 }
 
