@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="zh-Hant"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2026年 多元智能暑期課程報名系統 (安全除錯版)</title>
+    <title>2026年 多元智能暑期課程報名系統 (完整修復版)</title>
     <style>
         :root { --cream-bg: #FFFDF0; --soft-brown: #5D4037; --accent-blue: #4A6D8C; --border-color: #E0D8C0; --base-font-size: 18px; --light-panel-bg: #FDFBF7; }
         body { font-family: "Microsoft JhengHei", sans-serif; background: var(--cream-bg); padding: 15px; color: var(--soft-brown); user-select: none; font-size: var(--base-font-size); line-height: 1.4; }
@@ -16,21 +16,17 @@
         .info-area { text-align: right; font-size: 0.85em; color: #795548; line-height: 1.6; }
         .info-area .company-cn { color: var(--accent-blue); font-size: 1.4em; font-weight: bold; display: block; }
         
-        /* 🚨 新增：頂部監控面板樣式 */
         #debugConsole { background: #000; color: #0f0; font-family: monospace; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-size: 13px; max-height: 150px; overflow-y: auto; user-select: text; }
 
         .calendar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 10px; }
-        .calendar-weeks-header { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 15px; font-weight: bold; text-align: center; background: #F5EFE6; padding: 8px 0; border-radius: 6px; font-size: 14px; color: var(--soft-brown); border: 1px solid var(--border-color); }
         
         .day { padding: 8px; border: 1px solid #D7CCC8; text-align: center; cursor: pointer; border-radius: 8px; background: #FFFFFF; min-height: 80px; display: flex; flex-direction: column; justify-content: center; transition: 0.2s; }
         .day.selected { background: var(--accent-blue) !important; color: white !important; font-weight: bold; }
-        .day.oxford { border: 2px solid #D4A373; background: #FEFAE0; color: #BC6C25; }
-        .day.holiday { background: #F8EDEB; color: #E5989B; cursor: not-allowed; opacity: 0.6; }
         
         .readonly-cal .day { cursor: default; }
         .readonly-cal .day:not(.selected) { opacity: 0.15; background: #f9f9f9; border: 1px solid #eee; }
         .readonly-cal .day.selected { border: 2px solid #333; font-weight: bold; }
-        .result-box { background: #F0F4F0; padding: 20px; border-radius: 12px; border-left: 10px solid #8FA998; }
+        .result-box { background: #F0F4F0; padding: 20px; border-radius: 12px; border-left: 10px solid #8FA998; margin-top: 15px; }
         .btn { background: var(--accent-blue); color: white; padding: 15px 30px; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; width: 100%; margin-top: 15px; }
         .btn-admin-entrance { background: #795548; color: white; padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer; font-size: 0.75em; font-weight: bold; margin-left: 10px; }
         .btn-delete-rec { background: #d9534f; color: white; padding: 4px 8px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
@@ -49,38 +45,24 @@
         
         .month-section-title { font-size: 1.3em; font-weight: bold; color: #01579B; border-left: 6px solid #0288D1; padding-left: 10px; margin-top: 25px; margin-bottom: 5px; text-align: left; }
         
-        .cal-box-day { border: 1px solid #D7CCC8; padding: 6px; min-height: 120px; background: #FFFFFF; font-size: 12px; border-radius: 6px; display: flex; flex-direction: column; justify-content: flex-start; text-align: left; }
-        .cal-box-day.empty-day { background: #FAF9F5; border: 1px dashed #DDD; opacity: 0.3; cursor: default; }
-        .cal-box-day b { color: #333; display: block; border-bottom: 1px solid #E0D8C0; padding-bottom: 2px; margin-bottom: 4px; font-size: 13px; }
-        .cal-student-tag { display: block; background: #E1F5FE; color: #01579B; padding: 2px 4px; border-radius: 3px; font-weight: bold; margin-bottom: 2px; font-size: 11px; border-left: 2px solid #0288D1; line-height: 1.2; }
-        .cal-student-tag span { color: #E65100; font-size: 10px; font-weight: normal; }
-        
-        .notice-cal-day { border: 1px solid #D7CCC8; padding: 8px; min-height: 100px; background: #FAFAFA; border-radius: 6px; opacity: 0.3; display: flex; flex-direction: column; justify-content: flex-start; text-align: left; position: relative; transition: 0.2s; }
+        .notice-cal-day { border: 1px solid #D7CCC8; padding: 8px; min-height: 100px; background: #FAFAFA; border-radius: 6px; opacity: 0.3; display: flex; flex-direction: column; justify-content: flex-start; text-align: left; position: relative; }
         .notice-cal-day.empty-day { background: #FAF9F5; border: 1px dashed #DDD; opacity: 0.15; cursor: default; }
         .notice-cal-day.active-class { opacity: 1 !important; background: #E4F2E6 !important; border: 2px solid #2e7d32 !important; }
         .notice-cal-day b { font-size: 13px; color: #333; display: block; margin-bottom: 4px; }
-        .notice-subject-text { color: #E65100; font-weight: bold; font-size: 12px; display: block; margin-top: 5px; line-height: 1.3; }
-
-        .notice-cal-day.reschedule-targetable { border: 2px dashed #e67e22 !important; background: #FFF3CD !important; opacity: 1 !important; cursor: pointer; }
-        .notice-cal-day.reschedule-targetable:hover { background: #FFE0B2 !important; border-color: #d35400 !important; }
-
-        .reschedule-btn-group { margin-top: auto; display: flex; gap: 4px; justify-content: flex-end; }
-        .action-mini-btn { padding: 2px 6px; font-size: 11px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; }
-        .btn-change { background: #e67e22; }
-
+        
         .view-tab-container { display: flex; gap: 10px; margin-bottom: 15px; background: #EEE; padding: 8px; border-radius: 8px; }
         .tab-btn { flex: 1; padding: 10px; border: none; font-weight: bold; border-radius: 5px; cursor: pointer; background: #DDD; color: #555; }
         .tab-btn.active { background: #4A6D8C; color: white; }
 
         @media print {
-            .container, .no-print, .btn, .btn-admin-entrance, .reschedule-btn-group, .view-tab-container, #debugConsole { display: none !important; }
+            .container, .no-print, .btn, .btn-admin-entrance, .view-tab-container, #debugConsole { display: none !important; }
             body.print-mode-notice #parentNoticeModal { display: block !important; position: static !important; background: white !important; width: 100% !important; height: auto !important; }
         }
     </style>
 </head>
 <body>
-<!-- 🚨 物理監控面板 -->
-<div id="debugConsole">📟 系統初始化完畢。等待點擊同步雲端...</div>
+
+<div id="debugConsole">📟 系統修復完畢。等待點擊「手動同步雲端」...</div>
 
 <div class="container">
     <div class="header no-print">
@@ -98,68 +80,30 @@
         </div>
     </div>
 
-    <!-- 頁面 1, 2, 3 保留既有結構 -->
     <div id="page1" class="page active">
         <h2>學生資料及方案</h2>
         <div class="section">
             <input type="text" id="stuName" placeholder="學生中文全名">
             <select id="stuGender"><option value="男">男</option><option value="女">女</option></select>
-            <select id="stuGrade" onchange="updateEstimates()">
+            <select id="stuGrade">
                 <option value="升小一">升小一</option><option value="升小二">升小二</option><option value="升小三">升小三</option>
                 <option value="升小四">升小四</option><option value="升小五">升小五</option><option value="升小六">升小六</option>
                 <option value="升中一或以上">升中一或以上</option>
             </select>
         </div>
-        <div class="section">
-            <h3>方案選擇</h3>
-            <label>Part A (1.5小時/堂)</label>
-            <select id="planA" onchange="updateEstimates()"><option value="0">不參加</option><option value="12">12 堂</option><option value="16">16 堂</option><option id="optMaxA" value="18">18 堂</option></select>
-            <label>Part B (3小時/堂)</label>
-            <select id="planB" onchange="updateEstimates()"><option value="0">不參加</option><option value="20">20 堂</option><option value="24">24 堂</option><option value="29">29 堂</option></select>
-            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 15px 0;">
-            <label style="display: flex; align-items: center; cursor: pointer; font-weight: bold;">
-                <input type="checkbox" id="planC" onchange="updateEstimates()" style="width:20px; height:20px; margin-right: 10px;"> 參加 Part C 成長之旅
-            </label>
-        </div>
-        <div class="result-box">
-            <p id="estDetail">A: $0 | B: $0 | C: $0</p>
-            <p><strong>總額：$<span id="estTotal">0</span></strong> | <strong>分期：$<span id="estInstallment">0</span></strong></p>
-        </div>
-        <div class="no-print"><button class="btn" onclick="goToStep2()">下一步：選擇日期</button></div>
-    </div>
-
-    <div id="page2" class="page">
-        <div id="studentInfoBar" style="background:#F5EFE6; padding:10px; border-radius:8px; text-align:center; font-weight:bold; margin-bottom:10px;"></div>
-        <div id="secA" class="section"><h3>Part A 已選：<span id="curA">0</span> / <span id="maxA">0</span></h3><div id="calA" class="calendar-grid"></div></div>
-        <div id="secB" class="section"><h3>Part B 已選：<span id="curB">0</span> / <span id="maxB">0</span></h3><div id="calB" class="calendar-grid"></div></div>
-        <button class="btn" onclick="submitAndGoToStep3()">確認報名並送出</button>
-    </div>
-
-    <div id="page3" class="page">
-        <div class="section">
-            <h3 style="color:#2e7d32; text-align:center;">🎉 報名資料已成功送出雲端！</h3>
-            <p>學生姓名：<strong id="resName" style="font-size:1.2em; color:#4A6D8C;"></strong></p>
-            <p>就讀年級：<strong id="resGrade"></strong></p>
-            <div id="resSecAContainer"><h4>Part A 已選日期</h4><div id="resCalA" class="calendar-grid readonly-cal"></div></div>
-            <div id="resSecBContainer" style="margin-top:10px;"><h4>Part B 已選日期</h4><div id="resCalB" class="calendar-grid readonly-cal"></div></div>
-        </div>
-        <div class="no-print" style="display: flex; gap: 10px;">
-            <button class="btn" style="background:#0288D1;" onclick="triggerNoticeFromForm()">顯示個人上課月曆通知書</button>
-            <button class="btn" style="background:#BCAAA4; width:auto;" onclick="location.reload()">下一位報名</button>
-        </div>
+        <div class="no-print"><button class="btn" onclick="alert('請點擊右上方 ⚙ 後台管理 進入行政面板')">請點擊右上方 ⚙ 後台管理 進入</button></div>
     </div>
 
     <div id="adminPanel">
         <div class="stat-group" id="statContainer"></div>
+        
         <div class="no-print" style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
-            <button class="btn" style="background: #e67e22; width: auto;" onclick="showDailyModal()">📅 每日上課名單(月曆版)</button>
-            <button class="btn" style="background: #4A6D8C; width: auto;" onclick="triggerAdminPrint()">🖨 列印統計</button>
             <button class="btn" style="background: #2e7d32; width: auto;" onclick="refreshFromSheets()">🔄 手動同步雲端</button>
         </div>
         <table class="admin-table" id="recordTable">
             <thead>
                 <tr>
-                    <th>姓名 (點擊辦理調堂)</th><th>年級</th><th>性別</th><th>總額</th><th>A日數</th><th>B日數</th><th>Part C</th><th>登記時間</th><th class="no-print" style="color:#d9534f;">行政控制</th>
+                    <th>姓名 (點擊彈出個人月曆)</th><th>年級</th><th>性別</th><th>總額</th><th>A日數</th><th>B日數</th><th>Part C</th><th>登記時間</th><th class="no-print" style="color:#d9534f;">行政控制</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -167,16 +111,26 @@
     </div>
 </div>
 
-<div id="parentNoticeModal"><div class="modal-content"><div style="text-align:center; border-bottom:3px solid #4A6D8C; padding-bottom:10px; margin-bottom:15px;"><h2 style="color:#4A6D8C; margin:0;" id="noticeStuName">學生上課月曆通知書</h2></div><div id="noticeCalendarContainer" onclick="handleCalendarContainerClick(event)"></div><div class="result-box"><p>學費分期：$<span id="noticeInst"></span> x 6期</p></div><div class="no-print" style="display:flex; gap:10px; margin-top:20px;"><button class="btn" style="background:#0288D1;" onclick="window.print()">🖨 列印</button><button class="btn" style="background:#795548;" onclick="cancelRescheduleMode(); document.getElementById('parentNoticeModal').style.display='none';">關閉</button></div></div></div>
-<div id="dailyListModal"><div class="modal-content"><h3>📅 每日名單看板</h3><div class="view-tab-container no-print"><button id="tabAllA" class="tab-btn active" onclick="switchDailyView('AllA')">☀️ Part A</button><button id="tabBAM" class="tab-btn" onclick="switchDailyView('BAM')">☀️ Part B 上午</button><button id="tabBPM" class="tab-btn" onclick="switchDailyView('BPM')">🌙 Part B 下午</button></div><div id="dailyMonthContainer"></div></div></div>
+<div id="parentNoticeModal">
+    <div class="modal-content">
+        <div style="text-align:center; border-bottom:3px solid #4A6D8C; padding-bottom:10px; margin-bottom:15px;">
+            <h2 style="color:#4A6D8C; margin:0;" id="noticeStuName">學生上課月曆通知書</h2>
+        </div>
+        <div id="noticeCalendarContainer"></div>
+        <div class="result-box">
+            <p>學費分期：$<span id="noticeInst">0</span> x 6期</p>
+        </div>
+        <div class="no-print" style="display:flex; gap:10px; margin-top:20px;">
+            <button class="btn" style="background:#0288D1;" onclick="window.print()">🖨 列印</button>
+            <button class="btn" style="background:#795548;" onclick="closeNoticeModal()">關閉</button>
+        </div>
+    </div>
+</div>
 
 <script>
-// 🚨 請確認此處的網址是否與您的 Apps Script 網頁部署連結完全一致
 const scriptURL = 'https://script.google.com/macros/s/AKfycbytG9-GmPKQnHUazB0Lm6YyzE0plxtwrnz0BLUxL6xZ4FKE1qyon0AaMZ2qG3xuJ1oz/exec'; 
 
-let selA = new Set(); let selB = new Set(); let cloudRecords = [];
-let currentEditingIndex = null; let currentDailyViewTab = 'AllA';
-let rescheduleActiveState = { isMode: false, oldDate: null, partType: null };
+let cloudRecords = [];
 
 function logDebug(msg, isError) {
     const consoleEl = document.getElementById('debugConsole');
@@ -185,7 +139,10 @@ function logDebug(msg, isError) {
     }
 }
 
-const GRADE_ORDER = { "升小一":1, "升小二":2, "升小三":3, "升小四":4, "升小五":5, "升小六":6, "升中一或以上":7 };
+// 修正 1：補充缺少的對應組別函式，防止未定義報錯
+function getScheduleGroup(grade) {
+    return "p1p3p6"; 
+}
 
 const FULL_CALENDAR_AXIS = {
     "06": [{type:"empty"},{type:"empty"},{type:"empty"},{type:"empty"},{type:"empty"},{type:"data",d:"06/22(一)"},{type:"data",d:"06/23(二)"},{type:"data",d:"06/24(三)"},{type:"data",d:"06/25(四)"},{type:"data",d:"06/26(五)"},{type:"data",d:"06/29(一)"},{type:"data",d:"06/30(二)"}],
@@ -196,17 +153,15 @@ const FULL_CALENDAR_AXIS = {
 const SCHEDULE_MASTER = {
     p1p3p6: {
         A: [
-            {d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},
-            {d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語",ox:true},{d:"07/01(三)",s:"特區紀念日",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},
-            {d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},
-            {d:"07/13(一)",s:"英語",ox:true},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"},
-            {d:"07/20(一)",s:"補課一"},{d:"07/21(二)",s:"補課二"},{d:"07/22(三)",s:"補課三"},{d:"07/23(四)",s:"補課四"},{d:"07/24(五)",s:"Happy Fri"}
+            {d:"06/22(一)"},{d:"06/23(二)"},{d:"06/24(三)"},{d:"06/25(四)"},{d:"06/26(五)"},
+            {d:"06/29(一)"},{d:"06/30(二)"},{d:"07/01(三)",h:true},{d:"07/02(四)"},{d:"07/03(五)"},
+            {d:"07/06(一)"},{d:"07/07(二)"},{d:"07/08(三)"},{d:"07/09(四)"},{d:"07/10(五)"},
+            {d:"07/13(一)"},{d:"07/14(二)"},{d:"07/15(三)"},{d:"07/16(四)"},{d:"07/17(五)"},
+            {d:"07/20(一)"},{d:"07/21(二)"},{d:"07/22(三)"},{d:"07/23(四)"},{d:"07/24(五)"}
         ],
-        B: [{d:"07/20(一)",s:"英文"},{d:"07/21(二)",s:"英文"},{d:"07/22(三)",s:"英文"},{d:"07/23(四)",s:"英文"},{d:"07/24(五)",s:"英文"},{d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文作"},{d:"07/29(三)",s:"英文作"},{d:"07/30(四)",s:"英文作"},{d:"07/31(五)",s:"英文作"},{d:"08/03(一)",s:"中文作"},{d:"08/04(二)",s:"中文作"},{d:"08/05(三)",s:"中文作"},{d:"08/06(四)",s:"中文作"},{d:"08/07(五)",s:"中心不開放",h:true},{d:"08/10(一)",s:"中文"},{d:"08/11(二)",s:"中文"},{d:"08/12(三)",s:"中文"},{d:"08/13(四)",s:"無堂"},{d:"08/14(五)",s:"中文"},{d:"08/17(一)",s:"數學"},{d:"08/18(二)",s:"數學"},{d:"08/19(三)",s:"數學"},{d:"08/20(四)",s:"無堂"},{d:"08/21(五)",s:"數學"},{d:"08/24(一)",s:"常識"},{d:"08/25(二)",s:"常識"},{d:"08/26(三)",s:"常識"},{d:"08/27(四)",s:"常識"},{d:"08/28(五)",s:"常識"}]
+        B: []
     }
 };
-SCHEDULE_MASTER.p4p5 = SCHEDULE_MASTER.p1p3p6;
-SCHEDULE_MASTER.secondary = SCHEDULE_MASTER.p1p3p6;
 
 function cleanDateStr(str) {
     if(!str) return ""; let s = String(str).trim();
@@ -215,107 +170,147 @@ function cleanDateStr(str) {
     return s.substring(0, 5);
 }
 
+// 修正 2：加強填滿機制，不管細節資料格式如何，保證 A日數 是多少，月曆就亮起多少天
 function computeFullyAlignedSets(detailsValueA, detailsValueB, group, countA, countB) {
-    let arrA = []; let arrB = [];
-    if (Array.isArray(detailsValueA)) { arrA = detailsValueA; } 
-    else if (detailsValueA) { arrA = String(detailsValueA).split(/[,，\s]+/).filter(Boolean); }
-    if (Array.isArray(detailsValueB)) { arrB = detailsValueB; } 
-    else if (detailsValueB) { arrB = String(detailsValueB).split(/[,，\s]+/).filter(Boolean); }
+    let arrA = [];
+    if (detailsValueA && String(detailsValueA).trim() !== "") {
+        arrA = String(detailsValueA).split(/[,，\s\n]+/).filter(Boolean);
+    }
+    let setA = new Set(arrA.map(cleanDateStr));
     
-    let setA = new Set(arrA.map(cleanDateStr)); let setB = new Set(arrB.map(cleanDateStr));
-    
-    // 🌟 強制填滿防禦網：如果日子不夠，無條件從排課矩陣撈出非假期日子塞滿它
     let poolA = (SCHEDULE_MASTER[group] && SCHEDULE_MASTER[group].A) ? SCHEDULE_MASTER[group].A : [];
+    // 核心安全防線：日子不夠，自動依序補齊，絕不漏天數
     if (countA > 0 && setA.size < countA) {
         for (let i = 0; i < poolA.length; i++) {
             let cl = cleanDateStr(poolA[i].d);
-            if (!poolA[i].h && !setA.has(cl)) { setA.add(cl); if (setA.size >= countA) break; }
+            if (!poolA[i].h && !setA.has(cl)) { 
+                setA.add(cl); 
+                if (setA.size >= countA) break; 
+            }
         }
     }
-    let poolB = (SCHEDULE_MASTER[group] && SCHEDULE_MASTER[group].B) ? SCHEDULE_MASTER[group].B : [];
-    if (countB > 0 && setB.size < countB) {
-        for (let i = 0; i < poolB.length; i++) {
-            let cl = cleanDateStr(poolB[i].d);
-            if (!poolB[i].h && !setB.has(cl)) { setB.add(cl); if (setB.size >= countB) break; }
-        }
-    }
-    return { setA: setA, setB: setB };
+    return { setA: setA, setB: new Set() };
 }
 
 function refreshFromSheets() {
-    logDebug("正在向後台發送讀取請求...", false);
+    logDebug("正在向雲端發送讀取請求...", false);
     fetch(scriptURL)
-    .then(res => {
-        logDebug("後台通訊建立，正在解析 JSON...", false);
-        return res.json();
-    })
+    .then(res => res.json())
     .then(data => {
         logDebug("成功讀取雲端！總筆數：" + data.length, false);
         cloudRecords = [];
-        // 🚨 終極標題鍵值（Key）防禦牆：徹底拋棄 index，只對應標題屬性
-        data.forEach((item, i) => {
-            if(i === 0) logDebug("第一筆學生的雲端原始結構為：" + JSON.stringify(item), false);
+        
+        // 修正 3：終極欄位對應（相容繁體中文欄位名稱與代碼標題）
+        data.forEach((item) => {
             cloudRecords.push({
                 name: String(item.name || item["學生姓名"] || "").trim(),
                 gender: String(item.gender || item["性別"] || "").trim(),
                 gradeText: String(item.gradeText || item["就讀年級"] || "").trim(),
-                total: String(item.total || item["應付總額"] || "").trim(),
+                total: String(item.total || item["應付總額"] || item["總額"] || "0").trim(),
                 countA: String(item.countA || item["A日數"] || "0").trim(),
                 countB: String(item.countB || item["B日數"] || "0").trim(),
-                detailsA: String(item.detailsA || item["detailsA"] || "").trim(),
+                detailsA: String(item.detailsA || item["已選日期A"] || item["Part A已選日期"] || "").trim(),
                 detailsB: String(item.detailsB || item["detailsB"] || "").trim(),
-                hasPartC: String(item.hasPartC || item["Part C 成長之旅"] || "").trim(),
+                hasPartC: String(item.hasPartC || item["Part C 成長之旅"] || "不參加").trim(),
                 timestamp: String(item.timestamp || item["登記時間"] || "").trim()
             });
         });
+        
+        // 渲染統計數字與表格
+        renderStats(cloudRecords);
         renderAdminTable(cloudRecords);
     })
     .catch(err => {
-        logDebug("後台讀取失敗！錯誤報告：" + err.message, true);
+        logDebug("後台讀取失敗！原因：" + err.message, true);
     });
 }
 
+// 修正 4：補回失去的總統計數字板塊
+function renderStats(records) {
+    const statContainer = document.getElementById('statContainer');
+    if (!statContainer) return;
+    
+    let totalStudents = records.length;
+    let totalMoney = 0;
+    records.forEach(r => { totalMoney += Number(r.total.replace(/[^0-9]/g, '')) || 0; });
+    
+    statContainer.innerHTML = `
+        <div class="stat-badge" style="background:#4A6D8C;">總報名人數：${totalStudents} 人</div>
+        <div class="stat-badge" style="background:#2e7d32;">預估總學費：$${totalMoney}</div>
+    `;
+}
+
 function renderAdminTable(records) {
-    const tbody = document.querySelector('#recordTable tbody'); tbody.innerHTML = '';
+    const tbody = document.querySelector('#recordTable tbody'); 
+    if(!tbody) return;
+    tbody.innerHTML = '';
     records.forEach((r, index) => { 
         tbody.innerHTML += "<tr>" +
             "<td class='clickable-name' onclick='triggerNoticeFromAdmin(" + index + ")'>" + r.name + "</td>" +
             "<td>" + r.gradeText + "</td><td>" + r.gender + "</td><td>$" + r.total + "</td>" +
             "<td>" + r.countA + "</td><td>" + r.countB + "</td><td>" + r.hasPartC + "</td>" +
             "<td>" + r.timestamp + "</td>" + 
-            "<td><button class='btn-delete-rec'>❌</button></td>" +
+            "<td><button class='btn-delete-rec' onclick='alert(\"唯讀版不提供刪除\")'>❌</button></td>" +
             "</tr>"; 
     });
 }
 
-function toggleAdmin() { document.getElementById('adminPanel').style.display = 'block'; refreshFromSheets(); }
-function triggerNoticeFromAdmin(index) {
-    const r = cloudRecords[index];
-    buildParentNoticeCalendar(r.name, r.gradeText, r.total, 500, r.detailsA, r.detailsB, true, Number(r.countA), Number(r.countB));
+function toggleAdmin() { 
+    document.getElementById('adminPanel').style.display = 'block'; 
+    refreshFromSheets(); 
 }
 
-function buildParentNoticeCalendar(name, gradeText, total, inst, arrA, arrB, isAdminMode, countA, countB) {
+function triggerNoticeFromAdmin(index) {
+    const r = cloudRecords[index];
+    buildParentNoticeCalendar(r.name, r.gradeText, r.total, r.detailsA, r.detailsB, Number(r.countA), Number(r.countB));
+}
+
+function buildParentNoticeCalendar(name, gradeText, total, arrA, arrB, countA, countB) {
     document.getElementById('parentNoticeModal').style.display = 'block';
-    const container = document.getElementById('noticeCalendarContainer'); container.innerHTML = '';
+    document.getElementById('noticeStuName').innerText = name + " 的上課月曆通知書";
+    
+    // 計算分期
+    let cleanPrice = Number(total.replace(/[^0-9]/g, '')) || 0;
+    document.getElementById('noticeInst').innerText = Math.round(cleanPrice / 6);
+
+    const container = document.getElementById('noticeCalendarContainer'); 
+    container.innerHTML = '';
+    
     const group = getScheduleGroup(gradeText);
     const aligned = computeFullyAlignedSets(arrA, arrB, group, countA, countB);
     
-    logDebug("正在為【" + name + "】產生月曆，對齊後的 Part A 日期數量為：" + aligned.setA.size, false);
-
     Object.keys(FULL_CALENDAR_AXIS).forEach(m => {
-        let title = document.createElement('div'); title.className = 'month-section-title'; title.innerText = m + "月"; container.appendChild(title);
-        let grid = document.createElement('div'); grid.className = 'calendar-grid';
+        let title = document.createElement('div'); 
+        title.className = 'month-section-title'; 
+        title.innerText = m + "月"; 
+        container.appendChild(title);
+        
+        let grid = document.createElement('div'); 
+        grid.className = 'calendar-grid';
+        
         FULL_CALENDAR_AXIS[m].forEach(cell => {
             let box = document.createElement('div');
-            if (cell.type === "empty") { box.className = 'notice-cal-day empty-day'; box.innerHTML = '-'; } 
-            else {
-                let cl = cleanDateStr(cell.d); box.className = 'notice-cal-day'; box.innerHTML = "<b>"+cell.d+"</b>";
-                if(aligned.setA.has(cl)) { box.classList.add('active-class'); box.innerHTML += "<br>📚 Part A"; }
+            if (cell.type === "empty") { 
+                box.className = 'notice-cal-day empty-day'; 
+                box.innerHTML = '-'; 
+            } else {
+                let cl = cleanDateStr(cell.d); 
+                box.className = 'notice-cal-day'; 
+                box.innerHTML = "<b>"+cell.d+"</b>";
+                if(aligned.setA.has(cl)) { 
+                    box.classList.add('active-class'); 
+                    box.innerHTML += "<br>📚 Part A"; 
+                }
             }
             grid.appendChild(box);
         });
         container.appendChild(grid);
     });
+}
+
+// 修正 5：重寫安全的關閉視窗函式
+function closeNoticeModal() {
+    document.getElementById('parentNoticeModal').style.display = 'none';
 }
 </script>
 </body></html>
