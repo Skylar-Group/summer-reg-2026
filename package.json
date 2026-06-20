@@ -1,0 +1,13 @@
+{
+  "name": "summer-reg-2026",
+  "version": "1.0.0",
+  "description": "2026 博學堂暑期課程報名系統 — static front-end with Netlify Functions + Database for the 暑期特選課程 track.",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@netlify/database": "^1.0.0"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^5.3.0"
+  }
+}

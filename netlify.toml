@@ -1,0 +1,8 @@
+# The site is a static single-page app (index.html) plus a few Netlify Functions
+# that back the 暑期特選課程 (Summer Special Course) track. There is no build step.
+[build]
+  publish = "."
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"

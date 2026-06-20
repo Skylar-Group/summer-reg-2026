@@ -71,10 +71,19 @@
 
         .part-header-title { font-size: 1.6em; font-weight: bold; padding: 10px; margin-top: 30px; border-radius: 8px; color: #FFF; text-align: center; }
 
+        /* 🌟 暑期特選課程 (Summer Special Course) styling */
+        .part-header-title.special { background:#7e57c2; }
+        .day.selected-special { background:#EDE7F6 !important; border:2px solid #5e35b1 !important; color:#4527a0; font-weight:bold; }
+        .day .special-slot-sel { width:100%; margin-top:4px; padding:3px; font-size:11px; border-radius:5px; border:1px solid #b39ddb; }
+        .notice-cal-day.active-class-special { opacity:1 !important; background:#EDE7F6 !important; border:2px solid #5e35b1 !important; }
+        .notice-subject-text.special { color:#5e35b1; }
+        .cal-student-tag.special-tag { background:#EDE7F6; color:#4527a0; border-left-color:#5e35b1; }
+        .admin-section-title { font-size:1.2em; font-weight:bold; color:#5e35b1; border-left:6px solid #7e57c2; padding-left:10px; margin:30px 0 10px; }
+
         @media print {
             .container, .no-print, .btn, .btn-admin-entrance, .reschedule-btn-group, .view-tab-container, #debugConsole { display: none !important; }
             body { background: white !important; }
-            #parentNoticeModal { display: block !important; position: static !important; background: white !important; width: 100% !important; height: auto !important; }
+            #parentNoticeModal, #dailyListModal { display: block !important; position: static !important; background: white !important; width: 100% !important; height: auto !important; }
             .modal-content { border:none !important; padding:0 !important; width:100% !important; height:auto !important; overflow:visible !important; }
         }
     </style>
@@ -139,6 +148,12 @@
                 <option value="否">不參加 Part C 成長之旅 ($0)</option>
                 <option value="是">參加 Part C 成長之旅 (套裝折扣連動計費)</option>
             </select>
+
+            <label style="font-weight:bold; color:#5e35b1; margin-top:15px; display:block;">🌟 暑期特選課程 (單張以外獨立課程 / 不設分期)：</label>
+            <select id="selSpecial" onchange="calculateLiveRegistrationPrice()">
+                <option value="否">不參加 暑期特選課程 ($0)</option>
+                <option value="是">參加 暑期特選課程 (每堂2小時，10:00-15:00，下一步選擇日期及時段)</option>
+            </select>
         </div>
 
         <div class="result-box">
@@ -148,6 +163,7 @@
             <p style="margin:5px 0;">加購 Part C 項目：<span id="liveCountC" style="font-weight:bold;color:#9c27b0;">否</span> <span id="liveFeeDetailC" style="color:#9c27b0; font-weight:bold; margin-left:10px;"></span></p>
             <p style="margin:5px 0; font-size:1.3em; font-weight:bold; color:#d35400; border-top:1px dashed #ccc; padding-top:10px;">核實學費總額：$<span id="liveTotalAmount">0</span></p>
             <p style="margin:5px 0; font-size:1.2em; font-weight:bold; color:#2980b9;" id="liveInstallmentBox">分期費用：每期 $0 / 6期</p>
+            <p style="margin:12px 0 0 0; font-size:1.05em; font-weight:bold; color:#5e35b1; border-top:1px dashed #ccc; padding-top:10px; display:none;" id="liveSpecialBox">🌟 暑期特選課程：<span id="liveSpecialRateText">未參加</span>（此課程不設分期，總額將於下一步選定堂數後計算）</p>
         </div>
 
         <button class="btn" style="background:#2e7d32; margin-bottom:40px;" onclick="goToCalendarPage()">下一步：依科目選擇上課日期 ➔</button>
@@ -173,6 +189,13 @@
             <div class="section" id="calContainerB"></div>
         </div>
 
+        <div id="partSpecial_ContainerBlock" style="margin-top:20px; display:none;">
+            <div class="part-header-title special">🌟 暑期特選課程選課區 (10:00-15:00 / 每堂2小時)</div>
+            <div id="progBoxSpecial" class="progress-header-sticky" style="color:#5e35b1; border-color:#5e35b1;">已選 0 堂 ｜ 課程總額：$0（不設分期）</div>
+            <p style="font-size:14px; color:#5e35b1; font-weight:bold;">👉 於下方日曆每格選擇上課時段即代表選定該日；選「未選」即取消該日。</p>
+            <div class="section" id="calContainerSpecial"></div>
+        </div>
+
         <button class="btn" style="background:#b55d00; margin-bottom:50px; font-size:1.3em;" onclick="submitRegistrationForm()">🚀 確認日期無誤，正式提交報名資料至雲端</button>
     </div>
 
@@ -195,11 +218,21 @@
             </thead>
             <tbody></tbody>
         </table>
+
+        <div class="admin-section-title">🌟 暑期特選課程報名記錄 (獨立課程 / 不設分期)</div>
+        <table class="admin-table" id="specialTable">
+            <thead>
+                <tr>
+                    <th>姓名 (點擊彈出個人月曆)</th><th>年級</th><th>性別</th><th>堂數</th><th>課程總額</th><th>上課時段</th><th class="no-print" style="color:#d9534f;">行政控制</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
     </div>
 </div>
 
-<div id="parentNoticeModal"><div class="modal-content"><div style="text-align:center; border-bottom:3px solid #4A6D8C; padding-bottom:10px; margin-bottom:15px;"><h2 style="color:#4A6D8C; margin:0;" id="noticeStuName">學生上課月曆通知書</h2></div><div id="rescheduleNoticeBar" class="no-print" style="background:#FFF3CD; padding:12px; border-radius:8px; font-size:14px; border-left:5px solid #e67e22; color:#d35400; margin-bottom:15px; font-weight:bold;">💡 <b>直覺調堂：</b>點擊格子右下角 <b>🔄調堂</b>，點擊黃格子完成調堂。</div><div id="noticeCalendarContainer" onclick="handleCalendarContainerClick(event)"></div><div class="result-box"><p>學費分期：每期 $<span id="noticeInst">0</span> / 6期</p></div><div class="no-print" style="display:flex; gap:10px; margin-top:20px;"><button class="btn" style="background:#0288D1;" onclick="window.print()">🖨 列印通知書</button><button class="btn" style="background:#795548;" onclick="cancelRescheduleMode(); document.getElementById('parentNoticeModal').style.display='none';">關閉</button></div></div></div>
-<div id="dailyListModal"><div class="modal-content"><div style="display:flex; justify-content: space-between; align-items:center; border-bottom:2px solid #333; padding-bottom:10px;"><h3 style="margin:0;">📅 導師專用：暑期每日上課名單看板</h3><button class="btn" style="background:#795548; width:auto; margin:0;" onclick="document.getElementById('dailyListModal').style.display='none';">關閉</button></div><div class="view-tab-container no-print" style="margin-top:15px;"><button id="tabAllA" class="tab-btn active" onclick="switchDailyView('AllA')">☀️ 全體 Part A 名單</button><button id="tabBAM" class="tab-btn" onclick="switchDailyView('BAM')">☀️ Part B 上午班 (P2, P5, P6)</button><button id="tabBPM" class="tab-btn" onclick="switchDailyView('BPM')">🌙 Part B 下午班 (P1, P3, P4, 中學)</button></div><div id="dailyMonthContainer"></div></div></div>
+<div id="parentNoticeModal"><div class="modal-content"><div style="text-align:center; border-bottom:3px solid #4A6D8C; padding-bottom:10px; margin-bottom:15px;"><h2 style="color:#4A6D8C; margin:0;" id="noticeStuName">學生上課月曆通知書</h2></div><div id="rescheduleNoticeBar" class="no-print" style="background:#FFF3CD; padding:12px; border-radius:8px; font-size:14px; border-left:5px solid #e67e22; color:#d35400; margin-bottom:15px; font-weight:bold;">💡 <b>直覺調堂：</b>點擊格子右下角 <b>🔄調堂</b>，點擊黃格子完成調堂。</div><div id="noticeCalendarContainer" onclick="handleCalendarContainerClick(event)"></div><div class="result-box" id="noticeSummaryBox"><p style="margin:4px 0;" id="noticeTotalLine">課程總額：$<span id="noticeTotalVal">0</span></p><p style="margin:4px 0;">學費分期：每期 $<span id="noticeInst">0</span> / 6期</p><p style="margin:8px 0 0 0; color:#5e35b1; font-weight:bold; display:none;" id="noticeSpecialLine"></p></div><div class="no-print" style="display:flex; gap:10px; margin-top:20px;"><button class="btn" style="background:#0288D1;" onclick="window.print()">🖨 列印通知書</button><button class="btn" style="background:#795548;" onclick="cancelRescheduleMode(); document.getElementById('parentNoticeModal').style.display='none';">關閉</button></div></div></div>
+<div id="dailyListModal"><div class="modal-content"><div style="display:flex; justify-content: space-between; align-items:center; border-bottom:2px solid #333; padding-bottom:10px;"><h3 style="margin:0;">📅 導師專用：暑期每日上課名單看板</h3><div><button class="btn no-print" style="background:#0288D1; width:auto; margin:0 8px 0 0;" onclick="window.print()">🖨 列印點名日曆</button><button class="btn no-print" style="background:#795548; width:auto; margin:0;" onclick="document.getElementById('dailyListModal').style.display='none';">關閉</button></div></div><div class="view-tab-container no-print" style="margin-top:15px;"><button id="tabAllA" class="tab-btn active" onclick="switchDailyView('AllA')">☀️ 全體 Part A 名單</button><button id="tabBAM" class="tab-btn" onclick="switchDailyView('BAM')">☀️ Part B 上午班 (P2, P5, P6)</button><button id="tabBPM" class="tab-btn" onclick="switchDailyView('BPM')">🌙 Part B 下午班 (P1, P3, P4, 中學)</button></div><div id="dailyMonthContainer"></div></div></div>
 
 <script>
 const scriptURL = 'https://script.google.com/macros/s/AKfycbytG9-GmPKQnHUazB0Lm6YyzE0plxtwrnz0BLUxL6xZ4FKE1qyon0AaMZ2qG3xuJ1oz/exec'; 
@@ -215,6 +248,19 @@ let targetCountB = 0;
 let selectedRegDatesA = new Set();
 let selectedRegDatesB = new Set();
 
+// 🌟 暑期特選課程 (Summer Special Course) — independent track stored in Netlify Database
+const SPECIAL_API = '/api/special-course';
+const SPECIAL_SLOTS = ["10:00-12:00", "11:00-13:00", "12:00-14:00", "13:00-15:00"];
+let specialRecords = [];                 // raw session rows fetched from the database
+let specialStudents = [];                // sessions grouped per student (for admin table)
+let selectedSpecialSessions = new Map(); // date(MM/DD) -> time slot, for the in-progress registration
+
+function isSecondaryGrade(grade) {
+    var g = String(grade || "");
+    return g.includes("中") || g.includes("F") || g.includes("以上") || g.includes("7");
+}
+function specialRateForGrade(grade) { return isSecondaryGrade(grade) ? 420 : 380; }
+
 const GRADE_ORDER = { "升小一":1, "升小二":2, "升小三":3, "升小四":4, "升小五":5, "升小六":6, "升中一或以上":7 };
 
 function getScheduleGroup(gradeText) {
@@ -223,6 +269,15 @@ function getScheduleGroup(gradeText) {
     if (t.includes("四") || t.includes("五") || t.includes("4") || t.includes("5")) return "p4p5";
     if (t.includes("中") || t.includes("F") || t.includes("或以上") || t.includes("7")) return "secondary";
     return "p1p3p6";
+}
+
+// 🌟 Part B 上午 / 下午 班別判定（依年級固定分流，作為點名板分頁的唯一準則）
+// 上午班：P2、P5、P6；下午班：P1、P3、P4、中學或以上。中學一律下午，優先判定。
+function partBSession(gradeText) {
+    var g = String(gradeText || "");
+    if (g.includes("中") || g.includes("F") || g.includes("以上") || g.includes("7")) return "PM";
+    if (g.includes("二") || g.includes("五") || g.includes("六") || g.includes("2") || g.includes("5") || g.includes("6")) return "AM";
+    return "PM";
 }
 
 const FULL_CALENDAR_AXIS = {
@@ -234,36 +289,36 @@ const FULL_CALENDAR_AXIS = {
 // 🌟 物理對齊簡章：徹底修正 SCHEDULE_MASTER 中所有的殘留錯字，確保星期四、五科目完全校正不偏移！
 const SCHEDULE_MASTER = {
     p1p3p6: {
-        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語"},{d:"07/01(三)",s:"紅日假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(four)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語"},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
+        A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語"},{d:"07/01(三)",s:"紅日假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語"},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
         B: [
             {d:"07/20(一)",s:"英文"},{d:"07/21(二)",s:"英文"},{d:"07/22(三)",s:"英文"},{d:"07/23(四)",s:"英文"},{d:"07/24(五)",s:"英文"},
-            {d:"07/27(一)",s:"英作"},{d:"07/28(二)",s:"英作"},{d:"07/29(三)",s:"英作"},{d:"07/30(四)",s:"英作"},{d:"07/31(五)",s:"英作"},
+            {d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英作"},{d:"07/29(三)",s:"英作"},{d:"07/30(四)",s:"英作"},{d:"07/31(五)",s:"英作"},
             {d:"08/03(一)",s:"中作"},{d:"08/04(二)",s:"中作"},{d:"08/05(三)",s:"中作"},{d:"08/06(四)",s:"中作"},{d:"08/07(五)",s:"中心不開放",c:true},
             {d:"08/10(一)",s:"中文"},{d:"08/11(二)",s:"中文"},{d:"08/12(三)",s:"中文"},{d:"08/13(四)",s:"中文"},{d:"08/14(五)",s:"中文"},
             {d:"08/17(一)",s:"數學"},{d:"08/18(二)",s:"數學"},{d:"08/19(三)",s:"數學"},{d:"08/20(四)",s:"數學"},{d:"08/21(五)",s:"數學"},
-            {d:"08/24(一)",s:"常識"},{d:"08/25(二)",s:"常識"},{d:"08/26(三)",s:"常識"},{d:"08/27(four)",s:"常識"},{d:"08/28(五)",s:"常識"}
+            {d:"08/24(一)",s:"常識"},{d:"08/25(二)",s:"常識"},{d:"08/26(三)",s:"常識"},{d:"08/27(四)",s:"常識"},{d:"08/28(五)",s:"常識"}
         ]
     },
     p4p5: {
         A: [{d:"06/22(一)",s:"英文閱"},{d:"06/23(二)",s:"中文閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"詞語"},{d:"06/30(二)",s:"英語"},{d:"07/01(三)",s:"紅日假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中文閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中文作"},{d:"07/09(四)",s:"中文作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"英語"},{d:"07/14(二)",s:"英文閱"},{d:"07/15(三)",s:"英文作"},{d:"07/16(四)",s:"英文作"},{d:"07/17(五)",s:"Happy Fri"}],
         B: [
-            {d:"07/20(一)",s:"中文"},{d:"07/21(二)",s:"中文"},{d:"07/22(三)",s:"中文"},{d:"07/23(四)",s:"中模"},{d:"07/24(五)",s:"中解"},
-            {d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文"},{d:"07/29(三)",s:"英文"},{d:"07/30(四)",s:"英模"},{d:"07/31(五)",s:"英解"},
+            {d:"07/20(一)",s:"中文"},{d:"07/21(二)",s:"中文"},{d:"07/22(三)",s:"中文"},{d:"07/23(四)",s:"中文"},{d:"07/24(五)",s:"模擬考試"},
+            {d:"07/27(一)",s:"英文"},{d:"07/28(二)",s:"英文"},{d:"07/29(三)",s:"英文"},{d:"07/30(四)",s:"英文"},{d:"07/31(五)",s:"模擬考試"},
             {d:"08/03(一)",s:"中作"},{d:"08/04(二)",s:"中作"},{d:"08/05(三)",s:"英作"},{d:"08/06(四)",s:"英作"},{d:"08/07(五)",s:"中心不開放",c:true},
-            {d:"08/10(一)",s:"數學"},{d:"08/11(二)",s:"數學"},{d:"08/12(三)",s:"數學"},{d:"08/13(四)",s:"數模"},{d:"08/14(五)",s:"數解"},
-            {d:"08/17(一)",s:"人文"},{d:"08/18(二)",s:"人文"},{d:"08/19(三)",s:"人文"},{d:"08/20(四)",s:"人模"},{d:"08/21(五)",s:"人解"},
-            {d:"08/24(一)",s:"科學"},{d:"08/25(二)",s:"科學"},{d:"08/26(三)",s:"科學"},{d:"08/27(四)",s:"科模"},{d:"08/28(五)",s:"科解"}
+            {d:"08/10(一)",s:"數學"},{d:"08/11(二)",s:"數學"},{d:"08/12(三)",s:"數學"},{d:"08/13(四)",s:"數學"},{d:"08/14(五)",s:"模擬考試"},
+            {d:"08/17(一)",s:"人文"},{d:"08/18(二)",s:"人文"},{d:"08/19(三)",s:"人文"},{d:"08/20(四)",s:"人文"},{d:"08/21(五)",s:"模擬考試"},
+            {d:"08/24(一)",s:"科學"},{d:"08/25(二)",s:"科學"},{d:"08/26(三)",s:"科學"},{d:"08/27(四)",s:"科學"},{d:"08/28(五)",s:"模擬考試"}
         ]
     },
     secondary: {
-        A: [{d:"06/22(一)",s:"英閱"},{d:"06/23(二)",s:"中閱"},{d:"06/24(三)",s:"成語"},{d:"06/25(四)",s:"成語"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"科學"},{d:"06/30(二)",s:"歷史"},{d:"07/01(三)",s:"紅日假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中作"},{d:"07/09(四)",s:"中作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"文言解讀"},{d:"07/14(二)",s:"英閱"},{d:"07/15(三)",s:"英作"},{d:"07/16(四)",s:"英作"},{d:"07/17(五)",s:"Happy Fri"}],
+        A: [{d:"06/22(一)",s:"英閱"},{d:"06/23(二)",s:"中閱"},{d:"06/24(三)",s:"數學"},{d:"06/25(四)",s:"數學"},{d:"06/26(五)",s:"Happy Fri"},{d:"06/29(一)",s:"科學實驗"},{d:"06/30(二)",s:"歷史故事"},{d:"07/01(三)",s:"紅日假期",h:true},{d:"07/02(四)",s:"數學"},{d:"07/03(五)",s:"Happy Fri"},{d:"07/06(一)",s:"中閱"},{d:"07/07(二)",s:"數學"},{d:"07/08(三)",s:"中作"},{d:"07/09(四)",s:"中作"},{d:"07/10(五)",s:"Happy Fri"},{d:"07/13(一)",s:"文言文解讀"},{d:"07/14(二)",s:"文言文解讀"},{d:"07/15(三)",s:"英作"},{d:"07/16(四)",s:"英作"},{d:"07/17(五)",s:"Happy Fri"}],
         B: [
             {d:"07/20(一)",s:"中文週"},{d:"07/21(二)",s:"中文週"},{d:"07/22(三)",s:"中文週"},{d:"07/23(四)",s:"中文週"},{d:"07/24(五)",s:"中文週"},
             {d:"07/27(一)",s:"英文週"},{d:"07/28(二)",s:"英文週"},{d:"07/29(三)",s:"英文週"},{d:"07/30(四)",s:"英文週"},{d:"07/31(五)",s:"英文週"},
             {d:"08/03(一)",s:"英文週"},{d:"08/04(二)",s:"英文週"},{d:"08/05(三)",s:"英文週"},{d:"08/06(四)",s:"英文週"},{d:"08/07(五)",s:"中心不開放",c:true},
             {d:"08/10(一)",s:"中史"},{d:"08/11(二)",s:"中史"},{d:"08/12(三)",s:"中史"},{d:"08/13(四)",s:"中史"},{d:"08/14(五)",s:"地理"},
             {d:"08/17(一)",s:"數學週"},{d:"08/18(二)",s:"數學週"},{d:"08/19(三)",s:"數學週"},{d:"08/20(四)",s:"數學週"},{d:"08/21(五)",s:"數學週"},
-            {d:"08/24(一)",s:"科學"},{d:"08/25(二)",s:"科學"},{d:"08/26(三)",s:"科學"},{d:"08/27(four)",s:"科學"},{d:"08/28(五)",s:"西史"}
+            {d:"08/24(一)",s:"科學"},{d:"08/25(二)",s:"科學"},{d:"08/26(三)",s:"科學"},{d:"08/27(四)",s:"科學"},{d:"08/28(五)",s:"西史"}
         ]
     }
 };
@@ -328,27 +383,47 @@ function calculateLiveRegistrationPrice() {
     document.getElementById('liveTotalAmount').innerText = grandTotal;
     let instValue = Math.round(grandTotal / 6);
     document.getElementById('liveInstallmentBox').innerText = `分期費用：每期 $${instValue} / 6期`;
+
+    // 🌟 暑期特選課程即時提示（實際總額在下一步選定堂數後計算）
+    let joinSpecial = document.getElementById('selSpecial').value === "是";
+    let specialBox = document.getElementById('liveSpecialBox');
+    if (joinSpecial) {
+        let rate = specialRateForGrade(grade);
+        specialBox.style.display = 'block';
+        document.getElementById('liveSpecialRateText').innerText = `每堂 $${rate}（${isSecondary ? "升中學" : "升小學"}）`;
+    } else {
+        specialBox.style.display = 'none';
+        document.getElementById('liveSpecialRateText').innerText = "未參加";
+    }
 }
 
 function goToCalendarPage() {
     const name = document.getElementById('stuName').value.trim();
     if(!name) { alert("❌ 請先填寫學生中文全名！"); return; }
-    
+
     targetCountA = Number(document.getElementById('selCountA').value);
     targetCountB = Number(document.getElementById('selCountB').value);
-    
+    const joinSpecial = document.getElementById('selSpecial').value === "是";
+
+    if (targetCountA === 0 && targetCountB === 0 && !joinSpecial) {
+        alert("❌ 請至少選擇 Part A、Part B 或 暑期特選課程其中一項。"); return;
+    }
+
     selectedRegDatesA.clear();
     selectedRegDatesB.clear();
-    
+    selectedSpecialSessions.clear();
+
     document.getElementById('page1').classList.remove('active');
     document.getElementById('page2').classList.add('active');
     document.getElementById('regLimitTip').innerText = `🎯 堂數指標提示：Part A 請選滿 ${targetCountA} 天，Part B 請選滿 ${targetCountB} 天。`;
-    
+
     document.getElementById('partA_ContainerBlock').style.display = (targetCountA > 0) ? 'block' : 'none';
     document.getElementById('partB_ContainerBlock').style.display = (targetCountB > 0) ? 'block' : 'none';
-    
+    document.getElementById('partSpecial_ContainerBlock').style.display = joinSpecial ? 'block' : 'none';
+
     updateRegistrationProgressBarUI();
     buildSplitRegistrationCalendars();
+    if (joinSpecial) buildSpecialCalendar();
 }
 
 function backToStepOne() {
@@ -445,43 +520,119 @@ function buildSplitRegistrationCalendars() {
     }
 }
 
+function updateSpecialProgress() {
+    let grade = document.getElementById('stuGrade').value;
+    let rate = specialRateForGrade(grade);
+    let n = selectedSpecialSessions.size;
+    document.getElementById('progBoxSpecial').innerText = `已選 ${n} 堂 ｜ 課程總額：$${n * rate}（每堂 $${rate}，不設分期）`;
+}
+
+function buildSpecialCalendar() {
+    const container = document.getElementById('calContainerSpecial');
+    container.innerHTML = '';
+    Object.keys(FULL_CALENDAR_AXIS).forEach(m => {
+        let title = document.createElement('div'); title.className = 'month-section-title'; title.style.color = '#5e35b1'; title.style.borderLeftColor = '#7e57c2'; title.innerText = "2026年 " + m + "月 - 特選課程可選日期"; container.appendChild(title);
+        let weeksHeader = document.createElement('div'); weeksHeader.className = 'calendar-weeks-header';
+        weeksHeader.innerHTML = '<div>星期一</div><div>星期二</div><div>星期三</div><div>星期四</div><div>星期五</div>'; container.appendChild(weeksHeader);
+        let grid = document.createElement('div'); grid.className = 'calendar-grid';
+
+        FULL_CALENDAR_AXIS[m].forEach(cell => {
+            let box = document.createElement('div');
+            if (cell.type === "empty") { box.className = 'day holiday'; box.innerHTML = '-'; } else {
+                let cl = cleanDateStr(cell.d);
+                let refHol = SCHEDULE_MASTER.p1p3p6.A.find(x => cleanDateStr(x.d) === cl);
+                if (cl === "08/07") {
+                    box.className = 'day holiday'; box.innerHTML = "<b>" + cell.d + "</b><div class='sub-tag' style='color:#e5989b;'>中心不開放</div>";
+                } else if (refHol && refHol.h) {
+                    box.className = 'day holiday'; box.innerHTML = "<b>" + cell.d + "</b><div class='sub-tag' style='color:#e5989b;'>紅日假期</div>";
+                } else {
+                    box.className = 'day';
+                    if (selectedSpecialSessions.has(cl)) box.classList.add('selected-special');
+                    box.innerHTML = "<b>" + cell.d + "</b>";
+                    let sel = document.createElement('select'); sel.className = 'special-slot-sel';
+                    sel.innerHTML = '<option value="">未選</option>' + SPECIAL_SLOTS.map(s => `<option value="${s}" ${selectedSpecialSessions.get(cl) === s ? 'selected' : ''}>${s}</option>`).join('');
+                    sel.onchange = function () {
+                        if (this.value) { selectedSpecialSessions.set(cl, this.value); box.classList.add('selected-special'); }
+                        else { selectedSpecialSessions.delete(cl); box.classList.remove('selected-special'); }
+                        updateSpecialProgress();
+                    };
+                    box.appendChild(sel);
+                }
+            }
+            grid.appendChild(box);
+        });
+        container.appendChild(grid);
+    });
+    updateSpecialProgress();
+}
+
 function submitRegistrationForm() {
     if(targetCountA > 0 && selectedRegDatesA.size < targetCountA) { alert(`❌ 排課不完整：Part A 需要選滿 ${targetCountA} 堂。`); return; }
     if(targetCountB > 0 && selectedRegDatesB.size < targetCountB) { alert(`❌ 排課不完整：Part B 需要選滿 ${targetCountB} 堂。`); return; }
+
+    const joinSpecial = document.getElementById('selSpecial').value === "是";
+    if (joinSpecial && selectedSpecialSessions.size === 0) { alert("❌ 暑期特選課程：請至少選擇一堂上課日期及時段。"); return; }
 
     const name = document.getElementById('stuName').value.trim();
     const gender = document.getElementById('stuGender').value;
     const grade = document.getElementById('stuGrade').value;
     const isC = document.getElementById('selCountC').value;
     const total = document.getElementById('liveTotalAmount').innerText;
-    
+
     let arrA = Array.from(selectedRegDatesA).map(d => d + "(" + getWeekDaySymbol(d, 'A', grade) + ")").join(", ");
     let arrB = Array.from(selectedRegDatesB).map(d => d + "(" + getWeekDaySymbol(d, 'B', grade) + ")").join(", ");
-    
-    logDebug("正在上傳表單，安全同步寫入雲端試算表...", false);
-    
-    let payload = {
-        name: name, gender: gender, gradeText: grade, total: total,
-        A堂數: targetCountA, B堂數: targetCountB, PartC: isC,
-        timestamp: new Date().toLocaleString(), 詳細日期A: arrA, 詳細日期B: arrB
-    };
 
-    fetch(scriptURL, {
-        method: 'POST', mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        alert(`🎉 【${name}】暑期課程報名及選課登記成功！`);
-        document.getElementById('stuName').value = '';
-        document.getElementById('selCountA').value = "0";
-        document.getElementById('selCountB').value = "0";
-        document.getElementById('selCountC').value = "否";
-        calculateLiveRegistrationPrice();
-        document.getElementById('page2').classList.remove('active');
-        document.getElementById('page1').classList.add('active');
-    })
-    .catch(err => alert("❌ 提交報名失敗：" + err.message));
+    let specialRate = specialRateForGrade(grade);
+    let specialSessionsArr = Array.from(selectedSpecialSessions.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([d, slot]) => ({ date: d, slot: slot }));
+    let specialTotal = specialSessionsArr.length * specialRate;
+
+    logDebug("正在上傳表單，安全同步寫入雲端...", false);
+
+    let tasks = [];
+    // 1) Part A/B/C 主記錄 → 維持原有 Google Sheet 流程（完全不更動雲端試算表結構）
+    if (targetCountA > 0 || targetCountB > 0) {
+        let payload = {
+            name: name, gender: gender, gradeText: grade, total: total,
+            // 主要鍵名與 Google Sheet 實際欄位標頭（亦即 doGet 回傳鍵名）一致，
+            // 確保堂數與「所選日期」能正確寫入對應欄位，而非只寫入到姓名等少數欄。
+            countA: targetCountA, countB: targetCountB, hasPartC: isC,
+            detailsA: arrA, detailsB: arrB,
+            timestamp: new Date().toLocaleString(),
+            // 同時保留原中文鍵名作向後兼容；採標頭對應式的 Apps Script 會自動略過不符的多餘鍵。
+            A堂數: targetCountA, B堂數: targetCountB, PartC: isC, 詳細日期A: arrA, 詳細日期B: arrB
+        };
+        tasks.push(fetch(scriptURL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }));
+    }
+    // 2) 暑期特選課程 → 獨立寫入 Netlify Database（不影響原有資料檔）
+    if (joinSpecial && specialSessionsArr.length > 0) {
+        tasks.push(fetch(SPECIAL_API, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'register', name: name, gender: gender, gradeText: grade, isSecondary: isSecondaryGrade(grade), feePerSession: specialRate, sessions: specialSessionsArr })
+        }).catch(e => { logDebug("特選課程儲存失敗：" + e.message, true); }));
+    }
+
+    Promise.all(tasks).then(() => {
+        // req #3 / req #5：提交後即向家長顯示個人上課月曆通知書（可一鍵列印 / 儲存 PDF）
+        showParentNoticeAfterSubmit(name, grade, total, arrA, arrB, targetCountA, targetCountB, specialSessionsArr, specialTotal);
+    }).catch(err => alert("❌ 提交報名失敗：" + err.message));
+}
+
+function showParentNoticeAfterSubmit(name, grade, total, arrA, arrB, countA, countB, specialSessionsArr, specialTotal) {
+    alert(`🎉 【${name}】暑期課程報名及選課登記成功！下方為你的個人上課月曆通知書，可一鍵列印或儲存 PDF。`);
+    currentEditingIndex = null;
+    buildParentNoticeCalendar(name, grade, total, arrA, arrB, countA, countB, specialSessionsArr, specialTotal, true);
+    // 重設報名表，方便下一位學生登記
+    document.getElementById('stuName').value = '';
+    document.getElementById('selCountA').value = "0";
+    document.getElementById('selCountB').value = "0";
+    document.getElementById('selCountC').value = "否";
+    document.getElementById('selSpecial').value = "否";
+    selectedSpecialSessions.clear();
+    calculateLiveRegistrationPrice();
+    document.getElementById('page2').classList.remove('active');
+    document.getElementById('page1').classList.add('active');
 }
 
 function getWeekDaySymbol(dateStr, part, grade) {
@@ -501,10 +652,11 @@ function computeFullyAlignedSets(detailsValueA, detailsValueB, group, countA, co
     let strA = String(detailsValueA || "").trim();
     let strB = String(detailsValueB || "").trim();
 
-    // 抓取純淨的 MM/DD 核心格式，不再受括號、中文字、全半形逗號或空格干擾
-    let matchesA = strA.match(/\d{2}\/\d{2}/g);
+    // 抓取純淨的 M/D 核心格式，不再受括號、中文字、全半形逗號、空格或「未補零（如 7/6、8/3）」干擾
+    // cleanDateStr 會自動補零，故同時兼容 07/06 與 7/6 兩種寫法，徹底杜絕新登記學生在點名板與個人月曆中消失
+    let matchesA = strA.match(/\d{1,2}\/\d{1,2}/g);
     if (matchesA) { arrA = matchesA.map(cleanDateStr); }
-    let matchesB = strB.match(/\d{2}\/\d{2}/g);
+    let matchesB = strB.match(/\d{1,2}\/\d{1,2}/g);
     if (matchesB) { arrB = matchesB.map(cleanDateStr); }
     
     let setA = new Set(arrA); let setB = new Set(arrB);
@@ -549,11 +701,75 @@ function refreshFromSheets() {
         renderStats(cloudRecords); renderAdminTable(cloudRecords);
     })
     .catch(err => logDebug("加載失敗原因：" + err.message, true));
+
+    loadSpecialRecords();
+}
+
+// 🌟 從 Netlify Database 載入暑期特選課程報名記錄（與 Google Sheet 各自獨立）
+function loadSpecialRecords() {
+    fetch(SPECIAL_API)
+    .then(res => res.json())
+    .then(rows => {
+        if (!Array.isArray(rows)) rows = [];
+        specialRecords = rows.map(r => ({
+            name: String(r.student_name || "").trim(),
+            gender: String(r.gender || "").trim(),
+            gradeText: String(r.grade_text || "").trim(),
+            date: cleanDateStr(r.session_date),
+            slot: String(r.time_slot || "").trim(),
+            fee: Number(r.fee) || 0
+        }));
+        // 按學生分組，方便後台名單、個人月曆及統計
+        let byName = {};
+        specialRecords.forEach(r => {
+            if (!byName[r.name]) byName[r.name] = { name: r.name, gender: r.gender, gradeText: r.gradeText, rate: r.fee, sessions: [], total: 0 };
+            byName[r.name].sessions.push({ date: r.date, slot: r.slot });
+            byName[r.name].total += r.fee;
+            if (r.fee) byName[r.name].rate = r.fee;
+        });
+        specialStudents = Object.values(byName).map(s => {
+            s.sessions.sort((a, b) => a.date.localeCompare(b.date));
+            return s;
+        }).sort((a, b) => (GRADE_ORDER[a.gradeText] || 99) - (GRADE_ORDER[b.gradeText] || 99));
+        logDebug("成功讀取暑期特選課程記錄：" + specialStudents.length + " 位學生 / " + specialRecords.length + " 堂。", false);
+        renderStats(cloudRecords); renderSpecialTable();
+    })
+    .catch(err => { specialRecords = []; specialStudents = []; logDebug("特選課程記錄暫未能讀取（本機/離線時屬正常）：" + err.message, true); renderSpecialTable(); });
+}
+
+function renderSpecialTable() {
+    const tbody = document.querySelector('#specialTable tbody'); if (!tbody) return; tbody.innerHTML = '';
+    if (specialStudents.length === 0) { tbody.innerHTML = "<tr><td colspan='7' style='color:#999;'>暫無暑期特選課程報名記錄</td></tr>"; return; }
+    specialStudents.forEach((s, index) => {
+        let slotText = s.sessions.map(x => x.date + " " + x.slot).join("；");
+        tbody.innerHTML += "<tr>" +
+            "<td class='clickable-name' onclick='triggerSpecialNotice(" + index + ")'>" + s.name + "</td>" +
+            "<td>" + s.gradeText + "</td><td>" + s.gender + "</td>" +
+            "<td>" + s.sessions.length + " 堂</td><td>$" + s.total + "</td>" +
+            "<td style='text-align:left; font-size:12px;'>" + slotText + "</td>" +
+            "<td class='no-print'><button class='btn-delete-rec' id='delSp_" + index + "' onclick='deleteSpecialRecord(" + index + ")'>❌ 刪除</button></td>" +
+            "</tr>";
+    });
+}
+
+function deleteSpecialRecord(index) {
+    const s = specialStudents[index]; if (!s) return;
+    if (confirm(`⚠️ 確定要刪除【${s.name}】的暑期特選課程記錄嗎？`)) {
+        const btn = document.getElementById("delSp_" + index); if (btn) btn.innerText = "⏳...";
+        fetch(SPECIAL_API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', name: s.name }) })
+        .then(() => { alert("🎉 已刪除特選課程記錄。"); loadSpecialRecords(); })
+        .catch(err => alert("❌ 刪除失敗：" + err.message));
+    }
 }
 
 function renderStats(records) {
     const statContainer = document.getElementById('statContainer'); if (!statContainer) return;
-    let totalStudents = records.length; let totalMoney = 0; let countA = 0, countB = 0;
+    // 🌟 總報名學生＝Part A/B/C（Google Sheet）名單 ＋ 只報「暑期特選課程」的學生（依姓名去重，
+    //    同時參加兩邊的學生只計一次），讓特選課程學生也納入總報名人數。
+    let sheetNames = new Set(records.map(r => r.name));
+    let specialOnlyCount = specialStudents.filter(s => !sheetNames.has(s.name)).length;
+    let totalStudents = records.length + specialOnlyCount;
+    let totalMoney = 0; let countA = 0, countB = 0;
     let pBoy = 0, pGirl = 0, sBoy = 0, sGirl = 0;
     
     records.forEach(r => { 
@@ -574,6 +790,9 @@ function renderStats(records) {
         <div class="stat-badge" style="background:#e91e63;">Part C 小學女：${pGirl} 人</div>
         <div class="stat-badge" style="background:#34495e;">Part C 中學男：${sBoy} 人</div>
         <div class="stat-badge" style="background:#9c27b0;">Part C 中學女：${sGirl} 人</div>
+        <div class="stat-badge" style="background:#5e35b1;">🌟 特選課程學生：${specialStudents.length} 人</div>
+        <div class="stat-badge" style="background:#7e57c2;">🌟 特選課程堂數：${specialRecords.length} 堂</div>
+        <div class="stat-badge" style="background:#673ab7;">🌟 特選課程收費：$${specialRecords.reduce((a, r) => a + (r.fee || 0), 0)}</div>
     `;
 }
 
@@ -600,21 +819,50 @@ function deleteEntireRecord(index) {
     }
 }
 
-function triggerNoticeFromAdmin(index) { currentEditingIndex = index; cancelRescheduleMode(); const r = cloudRecords[index]; buildParentNoticeCalendar(r.name, r.gradeText, r.total, r.detailsA, r.detailsB, Number(r.countA), Number(r.countB)); }
+function triggerNoticeFromAdmin(index) {
+    currentEditingIndex = index; cancelRescheduleMode();
+    const r = cloudRecords[index];
+    let sp = specialStudents.find(s => s.name === r.name);
+    buildParentNoticeCalendar(r.name, r.gradeText, r.total, r.detailsA, r.detailsB, Number(r.countA), Number(r.countB), sp ? sp.sessions : [], sp ? sp.total : 0, false);
+}
 
-function buildParentNoticeCalendar(name, gradeText, total, arrA, arrB, countA, countB) {
+function triggerSpecialNotice(index) {
+    currentEditingIndex = null; cancelRescheduleMode();
+    const s = specialStudents[index]; if (!s) return;
+    buildParentNoticeCalendar(s.name, s.gradeText, "0", "", "", 0, 0, s.sessions, s.total, true);
+}
+
+function buildParentNoticeCalendar(name, gradeText, total, arrA, arrB, countA, countB, specialSessions, specialTotal, isParentView) {
+    specialSessions = specialSessions || [];
+    let specialMap = new Map();
+    specialSessions.forEach(s => specialMap.set(cleanDateStr(s.date), s.slot));
+
     document.getElementById('parentNoticeModal').style.display = 'block';
     document.getElementById('noticeStuName').innerText = name + " (" + gradeText + ") 暑期上課月曆通知書";
-    document.getElementById('noticeInst').innerText = Math.round((Number(total.replace(/[^0-9]/g, '')) || 0) / 6);
+    document.getElementById('rescheduleNoticeBar').style.display = isParentView ? 'none' : 'block';
+
+    let mainTotal = Number(String(total).replace(/[^0-9]/g, '')) || 0;
+    document.getElementById('noticeTotalVal').innerText = mainTotal;
+    document.getElementById('noticeInst').innerText = Math.round(mainTotal / 6);
+    document.getElementById('noticeTotalLine').style.display = mainTotal > 0 ? 'block' : 'none';
+    let instLine = document.getElementById('noticeInst').parentElement;
+    instLine.style.display = mainTotal > 0 ? 'block' : 'none';
+
+    let spLine = document.getElementById('noticeSpecialLine');
+    if (specialSessions.length > 0) {
+        spLine.style.display = 'block';
+        spLine.innerText = `🌟 暑期特選課程：共 ${specialSessions.length} 堂，課程總額 $${specialTotal || 0}（此課程不設分期）`;
+    } else { spLine.style.display = 'none'; }
+
     const container = document.getElementById('noticeCalendarContainer'); container.innerHTML = '';
     const group = getScheduleGroup(gradeText); const aligned = computeFullyAlignedSets(arrA, arrB, group, countA, countB);
-    
+
     Object.keys(FULL_CALENDAR_AXIS).forEach(m => {
         let title = document.createElement('div'); title.className = 'month-section-title'; title.innerText = "2026年 " + m + "月"; container.appendChild(title);
         let weeksHeader = document.createElement('div'); weeksHeader.className = 'calendar-weeks-header';
         weeksHeader.innerHTML = '<div>星期一</div><div>星期二</div><div>星期三</div><div>星期四</div><div>星期五</div>'; container.appendChild(weeksHeader);
         let grid = document.createElement('div'); grid.className = 'calendar-grid';
-        
+
         FULL_CALENDAR_AXIS[m].forEach(cell => {
             let box = document.createElement('div');
             if (cell.type === "empty") { box.className = 'notice-cal-day empty-day'; box.innerHTML = '-'; } else {
@@ -622,22 +870,27 @@ function buildParentNoticeCalendar(name, gradeText, total, arrA, arrB, countA, c
                 let masterGroup = SCHEDULE_MASTER[group] || SCHEDULE_MASTER.p1p3p6;
                 let subA = masterGroup.A.find(x => cleanDateStr(x.d) === cl); let subB = masterGroup.B.find(x => cleanDateStr(x.d) === cl);
                 let hasA = aligned.setA.has(cl); let hasB = aligned.setB.has(cl);
-                
+                let isHolidayCell = (cl === "08/07") || (subA && subA.h);
+                let hasSpecial = !isHolidayCell && specialMap.has(cl);
+
                 if (cl === "08/07") {
                     box.style.background = "#F8EDEB"; box.innerHTML += "<br><span style='color:#E5989B;font-size:11px;font-weight:bold;'>中心不開放</span>";
-                } else if (subA && subA.h) { 
-                    box.style.background = "#F8EDEB"; box.innerHTML += "<br><span style='color:#E5989B;font-size:11px;'>紅日假期</span>"; 
-                } else if (hasA) { 
-                    box.classList.add('active-class'); box.innerHTML += "<br><span class='notice-subject-text' style='color:#1b5e20;'>☀️ [A] " + (subA ? subA.s : "常規班") + "</span>"; 
-                    let btn = document.createElement('button'); btn.className = 'action-mini-btn btn-change no-print'; btn.innerText = '🔄調堂';
-                    btn.onclick = (e) => { e.stopPropagation(); startRescheduleMode(cell.d, 'A'); };
-                    let bg = document.createElement('div'); bg.className = 'reschedule-btn-group'; bg.appendChild(btn); box.appendChild(bg);
-                } else if (hasB) {
-                    box.classList.add('active-class-b'); box.innerHTML += "<br><span class='notice-subject-text' style='color:#b55d00;'>🌙 [B] " + (subB ? subB.s : "特訓班") + "</span>"; 
-                    let btn = document.createElement('button'); btn.className = 'action-mini-btn btn-change no-print'; btn.innerText = '🔄調堂';
-                    btn.onclick = (e) => { e.stopPropagation(); startRescheduleMode(cell.d, 'B'); };
-                    let bg = document.createElement('div'); bg.className = 'reschedule-btn-group'; bg.appendChild(btn); box.appendChild(bg);
-                } else { box.innerHTML += "<br><span style='color:#ccc;font-size:11px;'>無堂</span>"; }
+                } else if (subA && subA.h) {
+                    box.style.background = "#F8EDEB"; box.innerHTML += "<br><span style='color:#E5989B;font-size:11px;'>紅日假期</span>";
+                } else {
+                    let shown = false;
+                    if (hasA) {
+                        box.classList.add('active-class'); box.innerHTML += "<br><span class='notice-subject-text' style='color:#1b5e20;'>☀️ [A] " + (subA ? subA.s : "常規班") + "</span>"; shown = true;
+                        if (!isParentView) { let btn = document.createElement('button'); btn.className = 'action-mini-btn btn-change no-print'; btn.innerText = '🔄調堂'; btn.onclick = (e) => { e.stopPropagation(); startRescheduleMode(cell.d, 'A'); }; let bg = document.createElement('div'); bg.className = 'reschedule-btn-group'; bg.appendChild(btn); box.appendChild(bg); }
+                    } else if (hasB) {
+                        box.classList.add('active-class-b'); box.innerHTML += "<br><span class='notice-subject-text' style='color:#b55d00;'>🌙 [B] " + (subB ? subB.s : "特訓班") + "</span>"; shown = true;
+                        if (!isParentView) { let btn = document.createElement('button'); btn.className = 'action-mini-btn btn-change no-print'; btn.innerText = '🔄調堂'; btn.onclick = (e) => { e.stopPropagation(); startRescheduleMode(cell.d, 'B'); }; let bg = document.createElement('div'); bg.className = 'reschedule-btn-group'; bg.appendChild(btn); box.appendChild(bg); }
+                    }
+                    if (hasSpecial) {
+                        box.classList.add('active-class-special'); box.innerHTML += "<br><span class='notice-subject-text special'>🌟 特選課程 " + specialMap.get(cl) + "</span>"; shown = true;
+                    }
+                    if (!shown) box.innerHTML += "<br><span style='color:#ccc;font-size:11px;'>無堂</span>";
+                }
             }
             grid.appendChild(box);
         });
@@ -686,12 +939,26 @@ function generateDailyBoardHtml() {
                     let g = r.gradeText || ""; let grp = getScheduleGroup(g); let aligned = computeFullyAlignedSets(r.detailsA, r.detailsB, grp, Number(r.countA), Number(r.countB));
                     let masterGroup = SCHEDULE_MASTER[grp] || SCHEDULE_MASTER.p1p3p6; let subA = masterGroup.A.find(x => cleanDateStr(x.d) === cl); let subB = masterGroup.B.find(x => cleanDateStr(x.d) === cl);
                     if (currentDailyViewTab === 'AllA' && aligned.setA.has(cl)) { count++; let subName = subA ? subA.s : "常規"; tags += "<span class='cal-student-tag'>" + r.name + " <span>(" + g.replace('升','') + " / " + subName + ")</span></span>"; }
-                    else if (currentDailyViewTab === 'BAM' && aligned.setB.has(cl) && (g.includes('二') || g.includes('五') || g.includes('六') || g.includes('2') || g.includes('5') || g.includes('6'))) { count++; let subName = subB ? subB.s : "特訓"; tags += "<span class='cal-student-tag' style='background:#E8F5E9;color:#1B5E20;border-left-color:#4CAF50;'> " + r.name + " <span>(AM / " + subName + ")</span></span>"; }
-                    else if (currentDailyViewTab === 'BPM' && aligned.setB.has(cl) && (g.includes('一') || g.includes('三') || aligned.setB.has(cl) || g.includes('四') || g.includes('中') || g.includes('1') || g.includes('3') || g.includes('4'))) { count++; let subName = subB ? subB.s : "特訓"; tags += "<span class='cal-student-tag' style='background:#FFF3E0;color:#E65100;border-left-color:#FF9800;'> " + r.name + " <span>(" + g.replace('升','') + " / " + subName + ")</span></span>"; }
+                    else if (currentDailyViewTab === 'BAM' && aligned.setB.has(cl) && partBSession(g) === 'AM') { count++; let subName = subB ? subB.s : "特訓"; tags += "<span class='cal-student-tag' style='background:#E8F5E9;color:#1B5E20;border-left-color:#4CAF50;'> " + r.name + " <span>(AM / " + subName + ")</span></span>"; }
+                    else if (currentDailyViewTab === 'BPM' && aligned.setB.has(cl) && partBSession(g) === 'PM') { count++; let subName = subB ? subB.s : "特訓"; tags += "<span class='cal-student-tag' style='background:#FFF3E0;color:#E65100;border-left-color:#FF9800;'> " + r.name + " <span>(" + g.replace('升','') + " / " + subName + ")</span></span>"; }
+                });
+                // 🌟 暑期特選課程學生 — 於同一點名板以特別標記顯示，並列出上課時段（不分上下午 Tab，恆常顯示）
+                let specialCount = 0; let specialTags = "";
+                specialRecords.forEach(sr => {
+                    if (sr.date === cl) {
+                        specialCount++;
+                        specialTags += "<span class='cal-student-tag special-tag'>🌟 " + sr.name + " <span>(" + String(sr.gradeText).replace('升','') + " / 特選 " + sr.slot + ")</span></span>";
+                    }
                 });
                 let isH = (SCHEDULE_MASTER.p1p3p6.A.find(x=>cleanDateStr(x.d)===cl) && SCHEDULE_MASTER.p1p3p6.A.find(x=>cleanDateStr(x.d)===cl).h);
                 if (cl === "08/07") { htmlContent += "<span style='color:#E5989B;font-weight:bold;'>中心不開放</span>"; }
-                else if (isH) { htmlContent += "<span style='color:#E5989B;font-weight:bold;'>紅日假期</span>"; } else if(count > 0) { htmlContent += "<span style='color:#0288D1;font-weight:bold;font-size:11px;'>應到: " + count + " 人</span>" + tags; } else { htmlContent += "<span style='color:#ccc;'>無學生上課</span>"; }
+                else if (isH) { htmlContent += "<span style='color:#E5989B;font-weight:bold;'>紅日假期</span>"; }
+                else {
+                    let inner = "";
+                    if (count > 0) inner += "<span style='color:#0288D1;font-weight:bold;font-size:11px;'>應到: " + count + " 人</span>" + tags;
+                    if (specialCount > 0) inner += "<span style='color:#5e35b1;font-weight:bold;font-size:11px;display:block;margin-top:4px;border-top:1px dashed #D1C4E9;padding-top:3px;'>🌟 特選: " + specialCount + " 人</span>" + specialTags;
+                    htmlContent += inner || "<span style='color:#ccc;'>無學生上課</span>";
+                }
                 htmlContent += "</div>";
             }
         });
