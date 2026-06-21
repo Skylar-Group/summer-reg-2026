@@ -273,8 +273,12 @@
 <div id="dailyListModal"><div class="modal-content"><div style="display:flex; justify-content: space-between; align-items:center; border-bottom:2px solid #333; padding-bottom:10px;"><h3 style="margin:0;">📅 導師專用：暑期每日上課名單看板</h3><div class="no-print" style="display:flex; gap:8px;"><button class="btn" style="background:#0288D1; width:auto; margin:0;" onclick="printDailyBoard()">🖨 列印此名單</button><button class="btn" style="background:#795548; width:auto; margin:0;" onclick="document.getElementById('dailyListModal').style.display='none';">關閉</button></div></div><div class="view-tab-container no-print" style="margin-top:15px;"><button id="tabAllA" class="tab-btn active" onclick="switchDailyView('AllA')">☀️ 全體 Part A 名單</button><button id="tabBAM" class="tab-btn" onclick="switchDailyView('BAM')">☀️ Part B 上午班 (P2, P5, P6)</button><button id="tabBPM" class="tab-btn" onclick="switchDailyView('BPM')">🌙 Part B 下午班 (P1, P3, P4, 中學)</button><button id="tabPartC" class="tab-btn" onclick="switchDailyView('PartC')">🔮 Part C 成長之旅點名表</button></div><div id="dailyMonthContainer"></div></div></div>
 
 <script>
-const scriptURL = 'https://script.google.com/macros/s/AKfycbytG9-GmPKQnHUazB0Lm6YyzE0plxtwrnz0BLUxL6xZ4FKE1qyon0AaMZ2qG3xuJ1oz/exec'; 
-const ADMIN_PASSWORD_KEY = "skylar2026"; 
+// 🌟 報名資料庫端點：改用 Netlify Function + Netlify Blobs，每筆報名以伺服器產生的唯一 ID
+//    獨立存放（識別＝學生姓名＋登記時間），徹底取代舊有 Google 試算表「同名覆蓋」加瀏覽器本機備份
+//    的做法。資料存於伺服器，老師在任何裝置開啟後台都看到一致而完整的紀錄，不再出現 A/B 堂數歸零、
+//    舊紀錄被同名新報名蓋過、或舊折扣被自動帶回的問題。
+const apiURL = '/api/registrations';
+const ADMIN_PASSWORD_KEY = "skylar2026";
 
 let cloudRecords = [];
 let currentDailyViewTab = 'AllA';
@@ -382,56 +386,10 @@ function safeParseSpecial(val) {
 }
 function specialCount(special) { return special ? Object.keys(special).length : 0; }
 
-// 🌟 本機備份（localStorage）：特選課堂、折扣、備註這三類「附加欄位」即使雲端後端未能保存，
-//    也會在本機留底，並在每次同步雲端後自動補回，徹底杜絕「入咗又消失」的情況。
-const OVERLAY_KEY = 'bxt_overlay_v1';
-function loadOverlay() {
-    try { return JSON.parse(localStorage.getItem(OVERLAY_KEY) || '{}') || {}; } catch (e) { return {}; }
-}
-// 🌟 每次報名都是獨立一筆：本機備份改以「姓名＋登記時間」為唯一鍵，杜絕同名學生第二次報名時
-//    覆蓋第一次的備份，亦杜絕把以往的折扣自動帶入新報名。登記時間於提交時產生並隨表單送上雲端，
-//    回流時據此精確對齊，每筆報名各自獨立，由老師在後台自行決定刪除哪一筆。
-function overlayKey(name, timestamp) {
-    return String(name == null ? "" : name).trim() + "||" + String(timestamp == null ? "" : timestamp).trim();
-}
-function saveOverlayEntry(key, patch) {
-    if (!key) return;
-    try {
-        let all = loadOverlay();
-        all[key] = Object.assign(all[key] || {}, patch);
-        localStorage.setItem(OVERLAY_KEY, JSON.stringify(all));
-    } catch (e) {}
-}
-function removeOverlayEntry(key) {
-    if (!key) return;
-    try { let all = loadOverlay(); if (all[key]) { delete all[key]; localStorage.setItem(OVERLAY_KEY, JSON.stringify(all)); } } catch (e) {}
-}
-function applyOverlay(records) {
-    let all = loadOverlay();
-    records.forEach(r => {
-        // 本次報名的精確備份（姓名＋登記時間）；折扣只會由這筆精確備份沿用，絕不從同名其他紀錄或舊資料帶入。
-        let o = all[overlayKey(r.name, r.timestamp)];
-        // 舊版（僅以姓名為鍵）備份只作堂數／日期等結構資料的後備補回，折扣一律不沿用，避免舊折扣自動回填。
-        let legacy = all[r.name];
-        let struct = o || legacy;
-        if (struct) {
-            // 雲端若已有資料則以雲端為準；雲端缺失時才用本機備份補回，避免無故覆寫
-            if (specialCount(r.special) === 0 && struct.special && Object.keys(struct.special).length) r.special = safeParseSpecial(struct.special);
-            if ((!r.remark || !String(r.remark).trim()) && struct.remark) r.remark = String(struct.remark);
-            // 🌟 Part A／B 堂數與詳細日期：雲端後端常未保存這些欄位，導致後台 A/B 堂數顯示 0、
-            //    學生個人月曆及點名看板無資料。雲端缺失時以本機備份補回，徹底解決資料消失。
-            if ((!r.countA || Number(r.countA) === 0) && Number(struct.countA) > 0) r.countA = struct.countA;
-            if ((!r.countB || Number(r.countB) === 0) && Number(struct.countB) > 0) r.countB = struct.countB;
-            if ((!r.detailsA || !String(r.detailsA).trim()) && struct.detailsA) r.detailsA = String(struct.detailsA);
-            if ((!r.detailsB || !String(r.detailsB).trim()) && struct.detailsB) r.detailsB = String(struct.detailsB);
-            // 🌟 Part C 參加狀態：雲端後端常未保存 PartC 欄位，導致回流後變回「否」，
-            //    令 Part C 統計人數歸零、Part C 點名名單空白。雲端缺失時以本機備份補回。
-            if ((!r.hasPartC || String(r.hasPartC).trim() !== "是") && String(struct.hasPartC).trim() === "是") r.hasPartC = "是";
-        }
-        // 折扣：只有本次報名的精確備份（姓名＋登記時間）才沿用，徹底杜絕以往折扣被自動找回或套用到同名新報名。
-        if (o && (!r.discount || Number(r.discount) === 0) && o.discount) r.discount = Number(o.discount) || 0;
-    });
-}
+// 🌟 報名資料全部存於伺服器（Netlify Blobs），不再需要瀏覽器本機備份（localStorage）。
+//    舊做法以 localStorage 補回雲端缺失的欄位，但 localStorage 只存在於提交報名的那一部瀏覽器，
+//    老師在另一部裝置開啟後台時讀不到，導致 A/B 堂數顯示 0。現所有欄位（堂數、上課日期、特選課堂、
+//    Part C、折扣、備註）一律由伺服器完整保存與回傳，每筆報名各自獨立，不再有跨裝置遺失或同名覆蓋。
 
 function verifyAdminLogin() {
     let pw = prompt("🔒 請輸入行政控制台登入密碼：");
@@ -706,38 +664,30 @@ function submitRegistrationForm() {
     const total = document.getElementById('liveTotalAmount').innerText;
     const remark = document.getElementById('stuRemark').value.trim();
     const special = selectedSpecialDates;
-    const specialJson = JSON.stringify(special);
-    const specialNum = Object.keys(special).length;
 
     let arrA = Array.from(selectedRegDatesA).map(d => d + "(" + getWeekDaySymbol(d, 'A', grade) + ")").join(", ");
     let arrB = Array.from(selectedRegDatesB).map(d => d + "(" + getWeekDaySymbol(d, 'B', grade) + ")").join(", ");
 
-    logDebug("正在上傳表單，安全同步寫入雲端試算表...", false);
+    logDebug("正在上傳報名，安全寫入伺服器資料庫...", false);
 
-    // 🌟 本次報名的唯一登記時間：同時寫入雲端與本機備份鍵，確保每筆報名獨立可辨，回流時精確對齊。
+    // 🌟 本次報名的唯一登記時間（顯示用）；伺服器另會配發唯一 ID 作精確識別，每筆報名各自獨立。
     const submitTimestamp = new Date().toLocaleString();
 
-    let payload = {
+    // 報名核心資料一律完整送往伺服器保存（A／B 堂數與日期、特選課堂、Part C、備註），
+    // 新報名折扣一律為 0，絕不從同名舊紀錄帶入。
+    let record = {
         name: name, gender: gender, gradeText: grade, total: total,
-        A堂數: targetCountA, B堂數: targetCountB, countA: targetCountA, countB: targetCountB, PartC: isC,
-        timestamp: submitTimestamp, 詳細日期A: arrA, 詳細日期B: arrB, detailsA: arrA, detailsB: arrB,
-        specialDetails: specialJson, specialLessonsCount: specialNum, 特選: specialJson,
-        備註: remark, remark: remark
+        countA: targetCountA, countB: targetCountB, hasPartC: isC,
+        timestamp: submitTimestamp, detailsA: arrA, detailsB: arrB,
+        special: special, remark: remark, discount: 0
     };
 
-    // 🌟 本機備份報名核心（Part A／B 堂數與日期、特選課堂、備註）：即使雲端後端未保存這些欄位，
-    //    後台同步後亦會自動補回，徹底杜絕「A/B 堂數顯示 0、月曆及點名看板無資料」的情況。
-    //    以「姓名＋登記時間」為鍵：同名學生每次報名各自獨立留底，不會覆蓋上一次，也不含任何折扣。
-    saveOverlayEntry(overlayKey(name, submitTimestamp), {
-        countA: targetCountA, countB: targetCountB, detailsA: arrA, detailsB: arrB,
-        special: special, remark: remark, hasPartC: isC
-    });
-
-    fetch(scriptURL, {
-        method: 'POST', mode: 'no-cors',
+    fetch(apiURL, {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ action: 'create', record: record })
     })
+    .then(res => { if (!res.ok) throw new Error('伺服器回應 ' + res.status); return res.json(); })
     .then(() => {
         alert(`🎉 【${name}】暑期課程報名及選課登記成功！`);
         document.getElementById('stuName').value = '';
@@ -796,30 +746,31 @@ function computeFullyAlignedSets(detailsValueA, detailsValueB, group, countA, co
 }
 
 function refreshFromSheets() {
-    logDebug("正在從雲端數據庫加載最新名冊與總額...", false);
-    cloudRecords = []; 
-    fetch(scriptURL)
+    logDebug("正在從伺服器資料庫加載最新名冊與總額...", false);
+    cloudRecords = [];
+    fetch(apiURL)
     .then(res => res.json())
     .then(data => {
-        logDebug("成功讀取雲端！資料總筆數：" + data.length, false);
+        if (!Array.isArray(data)) data = [];
+        logDebug("成功讀取伺服器！報名總筆數：" + data.length, false);
         data.forEach(item => {
             cloudRecords.push({
-                name: String(item.name || item.姓名 || "").trim(), 
-                gender: String(item.gender || item.性別 || "").trim(), 
-                gradeText: String(item.gradeText || item.年級 || "").trim(),
-                total: String(item.total || item.總額 || "0").trim(), 
-                countA: String(item.A堂數 || item.countA || "0").trim(), 
-                countB: String(item.B堂數 || item.countB || "0").trim(),
-                detailsA: String(item.詳細日期A || item.detailsA || "").trim(), 
-                detailsB: String(item.詳細日期B || item.detailsB || "").trim(), 
-                hasPartC: String(item.PartC || item.hasPartC || "否").trim(),
-                discount: Number(String(item.折扣 || item.discount || "0").replace(/[^0-9.]/g, '')) || 0,
-                remark: String(item.備註 || item.remark || "").trim(),
-                special: safeParseSpecial(item.specialDetails || item.特選 || item.特選課),
-                timestamp: String(item.timestamp || item.登記時間 || "").trim()
+                id: String(item.id || ""),
+                name: String(item.name || "").trim(),
+                gender: String(item.gender || "").trim(),
+                gradeText: String(item.gradeText || "").trim(),
+                total: String(item.total || "0").trim(),
+                countA: String(item.countA || "0").trim(),
+                countB: String(item.countB || "0").trim(),
+                detailsA: String(item.detailsA || "").trim(),
+                detailsB: String(item.detailsB || "").trim(),
+                hasPartC: String(item.hasPartC || "否").trim(),
+                discount: Number(String(item.discount || "0").replace(/[^0-9.]/g, '')) || 0,
+                remark: String(item.remark || "").trim(),
+                special: safeParseSpecial(item.special),
+                timestamp: String(item.timestamp || "").trim()
             });
         });
-        applyOverlay(cloudRecords);
         renderStats(cloudRecords); renderAdminTable(cloudRecords);
     })
     .catch(err => logDebug("加載失敗原因：" + err.message, true));
@@ -906,11 +857,10 @@ function editDiscountRemark(index) {
     let rkInput = prompt(`為【${r.name}】填寫備註（可留空）：`, r.remark || "");
     if (rkInput === null) rkInput = r.remark || "";
     r.discount = discount; r.remark = String(rkInput).trim();
-    saveOverlayEntry(overlayKey(r.name, r.timestamp), { discount: discount, remark: r.remark });
-    // 先本地即時更新畫面，確保即使雲端尚未同步亦可即時反映
+    // 先本地即時更新畫面，確保即使伺服器尚未回應亦可即時反映
     renderStats(cloudRecords); renderAdminTable(cloudRecords);
-    fetch(scriptURL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update_record', name: r.name, timestamp: r.timestamp, 折扣: discount, 備註: r.remark, discount: discount, remark: r.remark }) })
-    .then(() => { logDebug(`已更新【${r.name}】折扣 $${discount}／備註。`, false); })
+    fetch(apiURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id: r.id, patch: { discount: discount, remark: r.remark } }) })
+    .then(res => { if (!res.ok) throw new Error('伺服器回應 ' + res.status); logDebug(`已更新【${r.name}】折扣 $${discount}／備註。`, false); })
     .catch(err => logDebug("折扣/備註同步失敗：" + err.message, true));
 }
 
@@ -929,21 +879,19 @@ function editSpecialLessons(index) {
         newSpecial[key] = tm ? tm[0].replace(/\s/g, '') : "10:00-12:00";
     });
     r.special = newSpecial;
-    saveOverlayEntry(overlayKey(r.name, r.timestamp), { special: newSpecial });
     renderStats(cloudRecords); renderAdminTable(cloudRecords);
-    fetch(scriptURL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update_record', name: r.name, timestamp: r.timestamp, specialDetails: JSON.stringify(newSpecial), specialLessonsCount: Object.keys(newSpecial).length, 特選: JSON.stringify(newSpecial) }) })
-    .then(() => { logDebug("已更新【" + r.name + "】特選課堂 " + Object.keys(newSpecial).length + " 堂。", false); })
+    fetch(apiURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id: r.id, patch: { special: newSpecial } }) })
+    .then(res => { if (!res.ok) throw new Error('伺服器回應 ' + res.status); logDebug("已更新【" + r.name + "】特選課堂 " + Object.keys(newSpecial).length + " 堂。", false); })
     .catch(err => logDebug("特選同步失敗：" + err.message, true));
 }
 
 function deleteEntireRecord(index) {
     const r = cloudRecords[index]; if (!r) return;
-    if (confirm(`⚠️ 確定要刪除學生【${r.name}】的紀錄嗎？`)) {
+    if (confirm(`⚠️ 確定要刪除學生【${r.name}】（登記時間 ${r.timestamp}）的這筆紀錄嗎？`)) {
         const btn = document.getElementById("delBtn_" + index); if(btn) btn.innerText = "⏳...";
-        // 一併清除這筆報名的本機備份（以姓名＋登記時間為鍵），避免刪除後又被本機備份補回。
-        removeOverlayEntry(overlayKey(r.name, r.timestamp));
-        fetch(scriptURL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete_record', name: r.name, timestamp: r.timestamp }) })
-        .then(() => { alert("🎉 刪除成功。"); refreshFromSheets(); });
+        fetch(apiURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'delete', id: r.id }) })
+        .then(res => { if (!res.ok) throw new Error('伺服器回應 ' + res.status); alert("🎉 刪除成功。"); refreshFromSheets(); })
+        .catch(err => { alert("❌ 刪除失敗：" + err.message); if(btn) btn.innerText = "❌ 刪除"; });
     }
 }
 
@@ -1045,8 +993,9 @@ function executeClickReschedule(targetNewDate) {
     let listA = Array.from(aligned.setA); let listB = Array.from(aligned.setB);
     if (partType === 'A') { let idx = listA.indexOf(oldDate); if (idx > -1) listA.splice(idx, 1); if (!listA.includes(targetNewDate)) listA.push(targetNewDate); r.detailsA = listA.join(", "); r.countA = listA.length; } 
     else { let idx = listB.indexOf(oldDate); if (idx > -1) listB.splice(idx, 1); if (!listB.includes(targetNewDate)) listB.push(targetNewDate); r.detailsB = listB.join(", "); r.countB = listB.length; }
-    fetch(scriptURL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update_record', name: r.name, countA: r.countA, countB: r.countB, detailsA: r.detailsA, detailsB: r.detailsB }) })
-    .then(() => { alert("🎉 雲端排課位置調堂更動成功！"); cancelRescheduleMode(); refreshFromSheets(); });
+    fetch(apiURL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'update', id: r.id, patch: { countA: String(r.countA), countB: String(r.countB), detailsA: r.detailsA, detailsB: r.detailsB } }) })
+    .then(res => { if (!res.ok) throw new Error('伺服器回應 ' + res.status); alert("🎉 排課位置調堂更動成功！"); cancelRescheduleMode(); refreshFromSheets(); })
+    .catch(err => { alert("❌ 調堂同步失敗：" + err.message); });
 }
 
 function cancelRescheduleMode() { rescheduleActiveState = { isMode: false, oldDate: null, partType: null }; document.querySelectorAll('.reschedule-targetable').forEach(el => el.classList.remove('reschedule-targetable')); document.getElementById('rescheduleNoticeBar').innerHTML = "💡 <b>直覺調堂：</b>點擊格子右下角 <b>🔄調堂</b>，點擊黃格子完成調堂。"; }
