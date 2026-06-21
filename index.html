@@ -44,7 +44,14 @@
         .stat-group { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
         .stat-badge { padding: 10px 15px; border-radius: 8px; font-weight: bold; font-size: 0.9em; color: white; text-align: center; min-width: 120px; }
         .admin-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; background: #FFFFFF; }
-        .admin-table th, .admin-table td { border: 1px solid var(--border-color); padding: 8px; text-align: center; }
+        .admin-table th, .admin-table td { border: 1px solid var(--border-color); padding: 8px; text-align: center; word-wrap: break-word; }
+        /* 特選堂數欄：規定欄寬，避免大量記錄時把表格撐得過闊；所選日期逐行顯示 */
+        .admin-table .special-col { width: 110px; max-width: 110px; }
+        .admin-table .special-col .sp-date-line { display: block; color: #2e7d32; font-size: 11px; line-height: 1.5; }
+        /* 行政控制欄：兩個按鈕保持同一行，不再折成兩行 */
+        .admin-table .admin-control-col { white-space: nowrap; width: 140px; }
+        /* 登記時間欄：隱藏 */
+        .time-col { display: none !important; }
         .clickable-name { color: #0288D1; font-weight: bold; cursor: pointer; text-decoration: underline; }
         
         #dailyListModal, #parentNoticeModal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; }
@@ -102,8 +109,17 @@
             body.printing-daily #dailyListModal .modal-content { border: none !important; padding: 0 !important; width: 100% !important; height: auto !important; overflow: visible !important; margin: 0 !important; }
             body.printing-daily .no-print { display: none !important; }
             /* 1版1星期：列印點名板時，每一週自成一頁 */
-            body.printing-daily .cal-week-block { page-break-after: always; break-after: page; }
+            body.printing-daily .cal-week-block { page-break-after: always; break-after: page; break-inside: avoid; page-break-inside: avoid; }
             body.printing-daily .cal-week-block:last-child { page-break-after: auto; break-after: auto; }
+            /* 強制 1 頁 1 星期：若該週學生資料太多而超出一頁，按比例縮小頂部標題、次標題及格內文字，
+               令整週排版壓縮在同一頁內，杜絕一週溢出至第二頁。 */
+            body.printing-daily .month-section-title { font-size: 13px !important; margin: 4px 0 2px 0 !important; padding-left: 8px !important; border-left-width: 4px !important; }
+            body.printing-daily .week-block-title { font-size: 11px !important; margin: 4px 0 3px 0 !important; padding-left: 6px !important; border-left-width: 4px !important; }
+            body.printing-daily .calendar-grid { gap: 4px !important; margin-top: 4px !important; }
+            body.printing-daily .cal-box-day { min-height: auto !important; padding: 3px !important; font-size: 9px !important; }
+            body.printing-daily .cal-box-day b { font-size: 10px !important; padding-bottom: 1px !important; margin-bottom: 2px !important; }
+            body.printing-daily .cal-student-tag { font-size: 9px !important; padding: 1px 3px !important; margin-bottom: 2px !important; line-height: 1.2 !important; }
+            body.printing-daily .cal-remark-tag { font-size: 8px !important; margin-top: 1px !important; padding: 0 3px !important; line-height: 1.2 !important; }
         }
     </style>
 </head>
@@ -245,7 +261,7 @@
         <table class="admin-table" id="recordTable">
             <thead>
                 <tr>
-                    <th>姓名 (點擊彈出個人月曆)</th><th>年級</th><th>性別</th><th class="money-col">總額</th><th class="money-col">折扣</th><th class="money-col">實收</th><th>A堂數</th><th>B堂數</th><th>Part C</th><th>特選堂數</th><th>備註</th><th class="no-print">登記時間</th><th class="no-print" style="color:#d9534f;">行政控制</th>
+                    <th>姓名 (點擊彈出個人月曆)</th><th>年級</th><th>性別</th><th class="money-col">總額</th><th class="money-col">折扣</th><th class="money-col">實收</th><th>A堂數</th><th>B堂數</th><th>Part C</th><th class="special-col">特選堂數</th><th>備註</th><th class="no-print time-col">登記時間</th><th class="no-print admin-control-col" style="color:#d9534f;">行政控制</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -394,6 +410,9 @@ function applyOverlay(records) {
         if ((!r.countB || Number(r.countB) === 0) && Number(o.countB) > 0) r.countB = o.countB;
         if ((!r.detailsA || !String(r.detailsA).trim()) && o.detailsA) r.detailsA = String(o.detailsA);
         if ((!r.detailsB || !String(r.detailsB).trim()) && o.detailsB) r.detailsB = String(o.detailsB);
+        // 🌟 Part C 參加狀態：雲端後端常未保存 PartC 欄位，導致回流後變回「否」，
+        //    令 Part C 統計人數歸零、Part C 點名名單空白。雲端缺失時以本機備份補回。
+        if ((!r.hasPartC || String(r.hasPartC).trim() !== "是") && String(o.hasPartC).trim() === "是") r.hasPartC = "是";
     });
 }
 
@@ -690,7 +709,7 @@ function submitRegistrationForm() {
     //    後台同步後亦會自動補回，徹底杜絕「A/B 堂數顯示 0、月曆及點名看板無資料」的情況。
     saveOverlayEntry(name, {
         countA: targetCountA, countB: targetCountB, detailsA: arrA, detailsB: arrB,
-        special: special, remark: remark
+        special: special, remark: remark, hasPartC: isC
     });
 
     fetch(scriptURL, {
@@ -848,10 +867,10 @@ function renderAdminTable(records) {
             "<td class='money-col'>" + (disc > 0 ? "-$" + disc : "—") + "</td>" +
             "<td class='money-col' style='font-weight:bold; color:#d35400;'>$" + net + "</td>" +
             "<td>" + r.countA + "</td><td>" + r.countB + "</td><td>" + r.hasPartC + "</td>" +
-            "<td style='font-size:12px;'>" + (specialCount(r.special) > 0 ? "⭐ " + specialCount(r.special) + " 堂<div style='color:#2e7d32;font-size:11px;'>" + escapeHtml(Object.keys(r.special).join("、")) + "</div>" : "—") + "</td>" +
+            "<td class='special-col' style='font-size:12px;'>" + (specialCount(r.special) > 0 ? "⭐ " + specialCount(r.special) + " 堂<div>" + Object.keys(r.special).map(function(d){ return "<span class='sp-date-line'>" + escapeHtml(d) + "</span>"; }).join("") + "</div>" : "—") + "</td>" +
             "<td style='text-align:left; max-width:160px; font-size:12px;'>" + escapeHtml(r.remark) + "</td>" +
-            "<td class='no-print'>" + r.timestamp + "</td>" +
-            "<td class='no-print'><button class='btn-delete-rec' style='background:#0288D1; margin-right:4px;' onclick='editDiscountRemark(" + index + ")'>✏️ 折扣/備註</button><button class='btn-delete-rec' id='delBtn_"+index+"' onclick='deleteEntireRecord(" + index + ")'>❌ 刪除</button></td>" +
+            "<td class='no-print time-col'>" + r.timestamp + "</td>" +
+            "<td class='no-print admin-control-col'><button class='btn-delete-rec' style='background:#0288D1; margin-right:4px;' onclick='editDiscountRemark(" + index + ")'>✏️ 折扣/備註</button><button class='btn-delete-rec' id='delBtn_"+index+"' onclick='deleteEntireRecord(" + index + ")'>❌ 刪除</button></td>" +
             "</tr>";
     });
 }
