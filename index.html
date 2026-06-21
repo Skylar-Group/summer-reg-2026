@@ -26,6 +26,8 @@
         .day .sub-tag { font-size: 11px; color: #666; margin-top: 4px; line-height: 1.2; font-weight: bold; }
         .day.selected-a { background: #E4F2E6 !important; border: 2px solid #2e7d32 !important; color: #1b5e20; font-weight: bold; }
         .day.selected-b { background: #FFF3E0 !important; border: 2px solid #e67e22 !important; color: #b55d00; font-weight: bold; }
+        .day.selected-sp { background: #E8F5E9 !important; border: 2px solid #388e3c !important; color: #1b5e20; font-weight: bold; }
+        .day .sp-time-tag { font-size: 11px; color: #2e7d32; margin-top: 4px; font-weight: bold; }
         .day.holiday { background: #F8EDEB !important; cursor: not-allowed; opacity: 0.5; }
         
         .result-box { background: #F0F4F0; padding: 20px; border-radius: 12px; border-left: 10px solid #8FA998; margin-top: 15px; }
@@ -195,6 +197,21 @@
             <div class="section" id="calContainerB"></div>
         </div>
 
+        <div id="partSpecial_ContainerBlock" style="margin-top:20px;">
+            <div class="part-header-title" style="background:#388e3c;">⭐ 特選自選課堂選課區（可選，非必填）</div>
+            <div id="progBoxSP" class="progress-header-sticky" style="color:#2e7d32; border-color:#388e3c;">特選自選：0 堂</div>
+            <p style="font-size:14px; color:#2e7d32; margin:0 0 10px 0;">💡 點選任何一個上課日子即可加入特選自選課堂，並輸入該堂的上課時間（例如 10:00-12:00）。再次點選可取消。</p>
+            <div class="section" id="calContainerSP"></div>
+        </div>
+
+        <div style="margin-top:20px;">
+            <div class="part-header-title" style="background:#795548;">📝 備註（可選）</div>
+            <div class="section">
+                <label style="font-weight:bold; color:#795548;">家長 / 學生備註：</label>
+                <textarea id="stuRemark" rows="3" style="width:100%; box-sizing:border-box; margin-top:8px; padding:10px; border:1px solid var(--border-color); border-radius:8px; font-size:14px;" placeholder="如有特別事項、過敏、接送安排等，可在此填寫"></textarea>
+            </div>
+        </div>
+
         <button class="btn" style="background:#b55d00; margin-bottom:50px; font-size:1.3em;" onclick="submitRegistrationForm()">🚀 確認日期無誤，正式提交報名資料至雲端</button>
     </div>
 
@@ -238,6 +255,7 @@ let targetCountA = 0;
 let targetCountB = 0;
 let selectedRegDatesA = new Set();
 let selectedRegDatesB = new Set();
+let selectedSpecialDates = {};
 
 const GRADE_ORDER = { "升小一":1, "升小二":2, "升小三":3, "升小四":4, "升小五":5, "升小六":6, "升中一或以上":7 };
 
@@ -410,16 +428,19 @@ function goToCalendarPage() {
     
     selectedRegDatesA.clear();
     selectedRegDatesB.clear();
-    
+    selectedSpecialDates = {};
+    document.getElementById('stuRemark').value = '';
+
     document.getElementById('page1').classList.remove('active');
     document.getElementById('page2').classList.add('active');
     document.getElementById('regLimitTip').innerText = `🎯 堂數指標提示：Part A 請選滿 ${targetCountA} 天，Part B 請選滿 ${targetCountB} 天。`;
-    
+
     document.getElementById('partA_ContainerBlock').style.display = (targetCountA > 0) ? 'block' : 'none';
     document.getElementById('partB_ContainerBlock').style.display = (targetCountB > 0) ? 'block' : 'none';
-    
+
     updateRegistrationProgressBarUI();
     buildSplitRegistrationCalendars();
+    buildSpecialRegistrationCalendar();
 }
 
 function backToStepOne() {
@@ -430,6 +451,67 @@ function backToStepOne() {
 function updateRegistrationProgressBarUI() {
     document.getElementById('progBoxA').innerText = `Part A 選課進度：${selectedRegDatesA.size} / ${targetCountA} 堂`;
     document.getElementById('progBoxB').innerText = `Part B 選課進度：${selectedRegDatesB.size} / ${targetCountB} 堂`;
+    document.getElementById('progBoxSP').innerText = `特選自選：${Object.keys(selectedSpecialDates).length} 堂`;
+}
+
+// 🌟 特選自選課堂選課區：學生可點選任何正規上課日子加入特選自選課堂，並自行輸入該堂上課時間。
+//    選課結果以 { "MM/DD": "10:00-12:00" } 形式存於 selectedSpecialDates，提交時一併寫入雲端。
+function buildSpecialRegistrationCalendar() {
+    const containerSP = document.getElementById('calContainerSP');
+    if (!containerSP) return;
+    containerSP.innerHTML = '';
+
+    const grade = document.getElementById('stuGrade').value;
+    const group = getScheduleGroup(grade);
+    const masterGroup = SCHEDULE_MASTER[group] || SCHEDULE_MASTER.p1p3p6;
+
+    Object.keys(FULL_CALENDAR_AXIS).forEach(m => {
+        let title = document.createElement('div'); title.className = 'month-section-title'; title.innerText = "2026年 " + m + "月 - 特選自選可選日期"; containerSP.appendChild(title);
+        let weeksHeader = document.createElement('div'); weeksHeader.className = 'calendar-weeks-header';
+        weeksHeader.innerHTML = '<div>星期一</div><div>星期二</div><div>星期三</div><div>星期四</div><div>星期五</div>'; containerSP.appendChild(weeksHeader);
+        let grid = document.createElement('div'); grid.className = 'calendar-grid';
+
+        FULL_CALENDAR_AXIS[m].forEach(cell => {
+            let box = document.createElement('div');
+            if (cell.type === "empty") { box.className = 'day holiday'; box.innerHTML = '-'; } else {
+                let cl = cleanDateStr(cell.d); box.className = 'day';
+                let subA = masterGroup.A.find(x => cleanDateStr(x.d) === cl);
+                let subB = masterGroup.B.find(x => cleanDateStr(x.d) === cl);
+                let isHoliday = (subA && subA.h) || (subB && subB.c) || cl === "08/07";
+
+                if (isHoliday) {
+                    box.classList.add('holiday');
+                    box.innerHTML = "<b>" + cell.d + "</b><div class='sub-tag' style='color:#e5989b;'>" + (cl === "08/07" || (subB && subB.c) ? "中心不開放" : "紅日假期") + "</div>";
+                } else {
+                    renderSpecialBox(box, cl, cell.d);
+                    box.onclick = () => {
+                        if (selectedSpecialDates[cl]) {
+                            delete selectedSpecialDates[cl];
+                        } else {
+                            let t = prompt("請輸入【" + cell.d + "】特選自選課堂的上課時間（例如 10:00-12:00）：", "10:00-12:00");
+                            if (t === null) return;
+                            let tm = String(t).match(/\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2}/);
+                            selectedSpecialDates[cl] = tm ? tm[0].replace(/\s/g, '') : "10:00-12:00";
+                        }
+                        renderSpecialBox(box, cl, cell.d);
+                        updateRegistrationProgressBarUI();
+                    };
+                }
+            }
+            grid.appendChild(box);
+        });
+        containerSP.appendChild(grid);
+    });
+}
+
+function renderSpecialBox(box, cl, label) {
+    if (selectedSpecialDates[cl]) {
+        box.classList.add('selected-sp');
+        box.innerHTML = "<b>" + label + "</b><div class='sp-time-tag'>⭐ " + escapeHtml(selectedSpecialDates[cl]) + "</div>";
+    } else {
+        box.classList.remove('selected-sp');
+        box.innerHTML = "<b>" + label + "</b><div class='sub-tag' style='color:#999;'>點選加入特選</div>";
+    }
 }
 
 function buildSplitRegistrationCalendars() {
@@ -525,17 +607,26 @@ function submitRegistrationForm() {
     const grade = document.getElementById('stuGrade').value;
     const isC = document.getElementById('selCountC').value;
     const total = document.getElementById('liveTotalAmount').innerText;
-    
+    const remark = document.getElementById('stuRemark').value.trim();
+    const special = selectedSpecialDates;
+    const specialJson = JSON.stringify(special);
+    const specialNum = Object.keys(special).length;
+
     let arrA = Array.from(selectedRegDatesA).map(d => d + "(" + getWeekDaySymbol(d, 'A', grade) + ")").join(", ");
     let arrB = Array.from(selectedRegDatesB).map(d => d + "(" + getWeekDaySymbol(d, 'B', grade) + ")").join(", ");
-    
+
     logDebug("正在上傳表單，安全同步寫入雲端試算表...", false);
-    
+
     let payload = {
         name: name, gender: gender, gradeText: grade, total: total,
         A堂數: targetCountA, B堂數: targetCountB, PartC: isC,
-        timestamp: new Date().toLocaleString(), 詳細日期A: arrA, 詳細日期B: arrB
+        timestamp: new Date().toLocaleString(), 詳細日期A: arrA, 詳細日期B: arrB,
+        specialDetails: specialJson, specialLessonsCount: specialNum, 特選: specialJson,
+        備註: remark, remark: remark
     };
+
+    // 本機備份特選課堂與備註，即使雲端後端未保存這些附加欄位亦可在後台同步後自動補回
+    if (specialNum > 0 || remark) { saveOverlayEntry(name, { special: special, remark: remark }); }
 
     fetch(scriptURL, {
         method: 'POST', mode: 'no-cors',
@@ -548,6 +639,8 @@ function submitRegistrationForm() {
         document.getElementById('selCountA').value = "0";
         document.getElementById('selCountB').value = "0";
         document.getElementById('selCountC').value = "否";
+        document.getElementById('stuRemark').value = '';
+        selectedSpecialDates = {};
         calculateLiveRegistrationPrice();
         document.getElementById('page2').classList.remove('active');
         document.getElementById('page1').classList.add('active');
@@ -692,7 +785,7 @@ function renderAdminTable(records) {
             "<td style='font-size:12px;'>" + (specialCount(r.special) > 0 ? "⭐ " + specialCount(r.special) + " 堂<div style='color:#2e7d32;font-size:11px;'>" + escapeHtml(Object.keys(r.special).join("、")) + "</div>" : "—") + "</td>" +
             "<td style='text-align:left; max-width:160px; font-size:12px;'>" + escapeHtml(r.remark) + "</td>" +
             "<td class='no-print'>" + r.timestamp + "</td>" +
-            "<td class='no-print'><button class='btn-delete-rec' style='background:#0288D1; margin-right:4px;' onclick='editDiscountRemark(" + index + ")'>✏️ 折扣/備註</button><button class='btn-delete-rec' style='background:#2e7d32; margin-right:4px;' onclick='editSpecialLessons(" + index + ")'>⭐ 特選</button><button class='btn-delete-rec' id='delBtn_"+index+"' onclick='deleteEntireRecord(" + index + ")'>❌ 刪除</button></td>" +
+            "<td class='no-print'><button class='btn-delete-rec' style='background:#0288D1; margin-right:4px;' onclick='editDiscountRemark(" + index + ")'>✏️ 折扣/備註</button><button class='btn-delete-rec' id='delBtn_"+index+"' onclick='deleteEntireRecord(" + index + ")'>❌ 刪除</button></td>" +
             "</tr>";
     });
 }
